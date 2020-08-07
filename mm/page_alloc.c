@@ -3547,6 +3547,7 @@ static inline bool zone_watermark_fast(struct zone *z, unsigned int order,
 	 * need to be calculated.
 	 */
 	if (!order) {
+<<<<<<< HEAD
 		long usable_free;
 		long reserved;
 
@@ -3556,6 +3557,13 @@ static inline bool zone_watermark_fast(struct zone *z, unsigned int order,
 		/* reserved may over estimate high-atomic reserves. */
 		usable_free -= min(usable_free, reserved);
 		if (usable_free > mark + z->lowmem_reserve[classzone_idx])
+=======
+		long fast_free;
+
+		fast_free = free_pages;
+		fast_free -= __zone_watermark_unusable_free(z, 0, alloc_flags);
+		if (fast_free > mark + z->lowmem_reserve[classzone_idx])
+>>>>>>> 9b9af35d4ec4 (BACKPORT: page_alloc: consider highatomic reserve in watermark fast)
 			return true;
 	}
 
