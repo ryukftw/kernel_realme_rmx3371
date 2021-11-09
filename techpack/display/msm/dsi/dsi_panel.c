@@ -5780,6 +5780,11 @@ int dsi_panel_post_switch(struct dsi_panel *panel)
 	return rc;
 }
 
+extern bool oneplus_dimlayer_hbm_enable;
+extern bool backup_dimlayer_hbm;
+extern int oneplus_dim_status;
+extern int backup_dim_status;
+
 int dsi_panel_enable(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -5834,10 +5839,14 @@ int dsi_panel_enable(struct dsi_panel *panel)
 		       panel->name, rc);
 	else
 		panel->panel_initialized = true;
-#ifdef OPLUS_BUG_STABILITY
-	if (panel->oplus_priv.gamma_switch_enable && (panel->cur_mode->timing.refresh_rate == 90)) {
-		dsi_panel_write_gamma_90(panel);
-	}
+
+	oneplus_dimlayer_hbm_enable = backup_dimlayer_hbm;
+	oneplus_dim_status = backup_dim_status;
+	pr_err("Restore dim when panel goes on");
+
+	mutex_unlock(&panel->panel_lock);
+
+	dsi_panel_init_display_modes(panel);
 
 /* add for optimizing the display effect under low backlight brightness */
 	rc = oplus_dimming_gamma_write(panel);
@@ -5944,7 +5953,14 @@ int dsi_panel_disable(struct dsi_panel *panel)
 			panel->power_mode == SDE_MODE_DPMS_LP2))
 			dsi_pwr_panel_regulator_mode_set(&panel->power_info,
 				"ibb", REGULATOR_MODE_STANDBY);
+		oneplus_dimlayer_hbm_enable = false;
+		oneplus_dim_status = 0;
+		pr_err("Kill dim when panel goes off");
 
+		if (panel->aod_mode == 2)
+			panel->aod_status = 1;
+		else if (panel->aod_mode == 0)
+			panel->aod_status = 0;
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_OFF);
 	#ifdef OPLUS_BUG_STABILITY
 		if (!strcmp(panel->oplus_priv.vendor_name,"NT37800")) {
