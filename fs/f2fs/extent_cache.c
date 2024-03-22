@@ -179,28 +179,48 @@ struct rb_entry *f2fs_lookup_rb_tree(struct rb_root_cached *root,
 	return re;
 }
 
+<<<<<<< HEAD
 struct rb_node **f2fs_lookup_rb_tree_ext(struct f2fs_sb_info *sbi,
 					struct rb_root_cached *root,
 					struct rb_node **parent,
 					unsigned long long key, bool *leftmost)
 {
 	struct rb_node **p = &root->rb_root.rb_node;
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+struct rb_node **__lookup_rb_tree_ext(struct f2fs_sb_info *sbi,
+			       struct rb_root *root, struct rb_node **parent,
+			       unsigned long long key)
+{
+	struct rb_node **p = &root->rb_node;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	struct rb_entry *re;
 
 	while (*p) {
 		*parent = *p;
 		re = rb_entry(*parent, struct rb_entry, rb_node);
 
+<<<<<<< HEAD
 		if (key < re->key) {
 			p = &(*p)->rb_left;
 		} else {
 			p = &(*p)->rb_right;
 			*leftmost = false;
 		}
+=======
+		if (key < re->key)
+			p = &(*p)->rb_left;
+		else
+			p = &(*p)->rb_right;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	}
 
 	return p;
 }
+<<<<<<< HEAD
+=======
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 struct rb_node **f2fs_lookup_rb_tree_for_insert(struct f2fs_sb_info *sbi,
 				struct rb_root_cached *root,

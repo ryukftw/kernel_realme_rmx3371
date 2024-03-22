@@ -1994,6 +1994,7 @@ TRACE_EVENT(f2fs_iostat,
 		__entry->fs_cdrio, __entry->fs_nrio, __entry->fs_mrio)
 );
 
+<<<<<<< HEAD
 #ifndef __F2FS_IOSTAT_LATENCY_TYPE
 #define __F2FS_IOSTAT_LATENCY_TYPE
 struct f2fs_iostat_latency {
@@ -2152,6 +2153,8 @@ TRACE_EVENT(f2fs_fiemap,
 		__entry->flags,
 		__entry->ret)
 );
+=======
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 DECLARE_EVENT_CLASS(f2fs__rw_start,
 
@@ -2168,8 +2171,16 @@ DECLARE_EVENT_CLASS(f2fs__rw_start,
 		__string(cmdline, command)
 		__field(pid_t, pid)
 		__field(ino_t, ino)
+<<<<<<< HEAD
 	),
 
+=======
+#ifdef CONFIG_F2FS_APPBOOST
+		__field(u64, mtime)
+		__field(u32, i_generation)
+#endif
+	),
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	TP_fast_assign(
 		/*
 		 * Replace the spaces in filenames and cmdlines
@@ -2185,13 +2196,32 @@ DECLARE_EVENT_CLASS(f2fs__rw_start,
 		(void)strreplace(__get_str(cmdline), ' ', '_');
 		__entry->pid = pid;
 		__entry->ino = inode->i_ino;
+<<<<<<< HEAD
 	),
 
+=======
+#ifdef CONFIG_F2FS_APPBOOST
+		__entry->mtime = timespec64_to_ns(&inode->i_mtime);
+		__entry->i_generation = inode->i_generation;
+#endif
+	),
+#ifdef CONFIG_F2FS_APPBOOST
+	TP_printk("entry_name %s, offset %llu, bytes %d, cmdline %s,"
+		" pid %d, i_size %llu, ino %lu, mtime %llu, i_generation %u",
+		__get_str(pathbuf), __entry->offset, __entry->bytes,
+		__get_str(cmdline), __entry->pid, __entry->i_size,
+		(unsigned long) __entry->ino, __entry->mtime,  __entry->i_generation)
+#else
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	TP_printk("entry_name %s, offset %llu, bytes %d, cmdline %s,"
 		" pid %d, i_size %llu, ino %lu",
 		__get_str(pathbuf), __entry->offset, __entry->bytes,
 		__get_str(cmdline), __entry->pid, __entry->i_size,
 		(unsigned long) __entry->ino)
+<<<<<<< HEAD
+=======
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 );
 
 DECLARE_EVENT_CLASS(f2fs__rw_end,
@@ -2241,7 +2271,10 @@ DEFINE_EVENT(f2fs__rw_start, f2fs_datawrite_start,
 );
 
 DEFINE_EVENT(f2fs__rw_end, f2fs_datawrite_end,
+<<<<<<< HEAD
 
+=======
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	TP_PROTO(struct inode *inode, loff_t offset, int bytes),
 
 	TP_ARGS(inode, offset, bytes)

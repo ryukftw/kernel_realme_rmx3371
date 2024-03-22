@@ -85,8 +85,12 @@ struct npu_network {
 	atomic_t ref_cnt;
 	bool is_valid;
 	bool is_active;
+<<<<<<< HEAD
 	bool is_unloading;
 	bool is_executing;
+=======
+        bool is_unloading;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	bool fw_error;
 	struct npu_client *client;
 	struct list_head cmd_list;

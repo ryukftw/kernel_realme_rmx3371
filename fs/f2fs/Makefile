@@ -9,4 +9,10 @@ f2fs-$(CONFIG_F2FS_FS_XATTR) += xattr.o
 f2fs-$(CONFIG_F2FS_FS_POSIX_ACL) += acl.o
 f2fs-$(CONFIG_FS_VERITY) += verity.o
 f2fs-$(CONFIG_F2FS_FS_COMPRESSION) += compress.o
+<<<<<<< HEAD
 f2fs-$(CONFIG_F2FS_IOSTAT) += iostat.o
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+f2fs-$(CONFIG_F2FS_BD_STAT) += of2fs_sysfs.o
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))

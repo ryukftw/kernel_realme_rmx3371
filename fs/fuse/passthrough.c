@@ -15,6 +15,7 @@ struct fuse_aio_req {
 	struct kiocb *iocb_fuse;
 };
 
+<<<<<<< HEAD
 static inline void kiocb_clone(struct kiocb *kiocb, struct kiocb *kiocb_src,
 			       struct file *filp)
 {
@@ -27,6 +28,8 @@ static inline void kiocb_clone(struct kiocb *kiocb, struct kiocb *kiocb_src,
 	};
 }
 
+=======
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 static void fuse_file_accessed(struct file *dst_file, struct file *src_file)
 {
 	struct inode *dst_inode;
@@ -174,7 +177,10 @@ ssize_t fuse_passthrough_write_iter(struct kiocb *iocb_fuse,
 out:
 	revert_creds(old_cred);
 	inode_unlock(fuse_inode);
+<<<<<<< HEAD
 
+=======
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	return ret;
 }
 

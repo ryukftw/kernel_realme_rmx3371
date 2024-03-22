@@ -11,6 +11,8 @@
 #include <linux/hid.h>
 #include <linux/idr.h>
 #include <linux/input/mt.h>
+#include <linux/leds.h>
+#include <linux/led-class-multicolor.h>
 #include <linux/module.h>
 
 #include <asm/unaligned.h>
@@ -38,11 +40,16 @@ struct ps_device {
 	uint8_t battery_capacity;
 	int battery_status;
 
+<<<<<<< HEAD
+=======
+	const char *input_dev_name; /* Name of primary input device. */
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	uint8_t mac_address[6]; /* Note: stored in little endian order. */
 	uint32_t hw_version;
 	uint32_t fw_version;
 
 	int (*parse_report)(struct ps_device *dev, struct hid_report *report, u8 *data, int size);
+	void (*remove)(struct ps_device *dev);
 };
 
 /* Calibration data for playstation motion sensors. */
@@ -53,6 +60,16 @@ struct ps_calibration_data {
 	int sens_denom;
 };
 
+<<<<<<< HEAD
+=======
+struct ps_led_info {
+	const char *name;
+	const char *color;
+	enum led_brightness (*brightness_get)(struct led_classdev *cdev);
+	int (*brightness_set)(struct led_classdev *cdev, enum led_brightness);
+};
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 /* Seed values for DualShock4 / DualSense CRC32 for different report types. */
 #define PS_INPUT_CRC32_SEED	0xA1
 #define PS_OUTPUT_CRC32_SEED	0xA2
@@ -155,6 +172,7 @@ struct dualsense {
 	uint8_t motor_right;
 
 	/* RGB lightbar */
+	struct led_classdev_mc lightbar;
 	bool update_lightbar;
 	uint8_t lightbar_red;
 	uint8_t lightbar_green;
@@ -171,6 +189,7 @@ struct dualsense {
 	struct led_classdev player_leds[5];
 
 	struct work_struct output_worker;
+	bool output_worker_initialized;
 	void *output_report_dmabuf;
 	uint8_t output_seq; /* Sequence number for output report. */
 };
@@ -289,6 +308,9 @@ static const struct {int x; int y; } ps_gamepad_hat_mapping[] = {
 	{0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1},
 	{0, 0},
 };
+
+static inline void dualsense_schedule_work(struct dualsense *ds);
+static void dualsense_set_lightbar(struct dualsense *ds, uint8_t red, uint8_t green, uint8_t blue);
 
 /*
  * Add a new ps_device to ps_devices if it doesn't exist.
@@ -527,6 +549,74 @@ static int ps_get_report(struct hid_device *hdev, uint8_t report_id, uint8_t *bu
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+static int ps_led_register(struct ps_device *ps_dev, struct led_classdev *led,
+		const struct ps_led_info *led_info)
+{
+	int ret;
+
+	led->name = devm_kasprintf(&ps_dev->hdev->dev, GFP_KERNEL,
+			"%s:%s:%s", ps_dev->input_dev_name, led_info->color, led_info->name);
+
+	if (!led->name)
+		return -ENOMEM;
+
+	led->brightness = 0;
+	led->max_brightness = 1;
+	led->flags = LED_CORE_SUSPENDRESUME;
+	led->brightness_get = led_info->brightness_get;
+	led->brightness_set_blocking = led_info->brightness_set;
+
+	ret = devm_led_classdev_register(&ps_dev->hdev->dev, led);
+	if (ret) {
+		hid_err(ps_dev->hdev, "Failed to register LED %s: %d\n", led_info->name, ret);
+		return ret;
+	}
+
+	return 0;
+}
+
+/* Register a DualSense/DualShock4 RGB lightbar represented by a multicolor LED. */
+static int ps_lightbar_register(struct ps_device *ps_dev, struct led_classdev_mc *lightbar_mc_dev,
+	int (*brightness_set)(struct led_classdev *, enum led_brightness))
+{
+	struct hid_device *hdev = ps_dev->hdev;
+	struct mc_subled *mc_led_info;
+	struct led_classdev *led_cdev;
+	int ret;
+
+	mc_led_info = devm_kmalloc_array(&hdev->dev, 3, sizeof(*mc_led_info),
+					 GFP_KERNEL | __GFP_ZERO);
+	if (!mc_led_info)
+		return -ENOMEM;
+
+	mc_led_info[0].color_index = LED_COLOR_ID_RED;
+	mc_led_info[1].color_index = LED_COLOR_ID_GREEN;
+	mc_led_info[2].color_index = LED_COLOR_ID_BLUE;
+
+	lightbar_mc_dev->subled_info = mc_led_info;
+	lightbar_mc_dev->num_colors = 3;
+
+	led_cdev = &lightbar_mc_dev->led_cdev;
+	led_cdev->name = devm_kasprintf(&hdev->dev, GFP_KERNEL, "%s:rgb:indicator",
+			ps_dev->input_dev_name);
+	if (!led_cdev->name)
+		return -ENOMEM;
+	led_cdev->brightness = 255;
+	led_cdev->max_brightness = 255;
+	led_cdev->brightness_set_blocking = brightness_set;
+
+	ret = devm_led_classdev_multicolor_register(&hdev->dev, lightbar_mc_dev);
+	if (ret < 0) {
+		hid_err(hdev, "Cannot register multicolor LED device\n");
+		return ret;
+	}
+
+	return 0;
+}
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 static struct input_dev *ps_sensors_create(struct hid_device *hdev, int accel_range, int accel_res,
 		int gyro_range, int gyro_res)
 {
@@ -599,7 +689,11 @@ static ssize_t firmware_version_show(struct device *dev,
 	struct hid_device *hdev = to_hid_device(dev);
 	struct ps_device *ps_dev = hid_get_drvdata(hdev);
 
+<<<<<<< HEAD
 	return snprintf(buf, PAGE_SIZE, "0x%08x\n", ps_dev->fw_version);
+=======
+	return sysfs_emit(buf, "0x%08x\n", ps_dev->fw_version);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 }
 
 static DEVICE_ATTR_RO(firmware_version);
@@ -611,20 +705,21 @@ static ssize_t hardware_version_show(struct device *dev,
 	struct hid_device *hdev = to_hid_device(dev);
 	struct ps_device *ps_dev = hid_get_drvdata(hdev);
 
+<<<<<<< HEAD
 	return snprintf(buf, PAGE_SIZE, "0x%08x\n", ps_dev->hw_version);
+=======
+	return sysfs_emit(buf, "0x%08x\n", ps_dev->hw_version);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 }
 
 static DEVICE_ATTR_RO(hardware_version);
 
-static struct attribute *ps_device_attributes[] = {
+static struct attribute *ps_device_attrs[] = {
 	&dev_attr_firmware_version.attr,
 	&dev_attr_hardware_version.attr,
 	NULL
 };
-
-static const struct attribute_group ps_device_attribute_group = {
-	.attrs = ps_device_attributes,
-};
+ATTRIBUTE_GROUPS(ps_device);
 
 static int dualsense_get_calibration_data(struct dualsense *ds)
 {
@@ -716,6 +811,7 @@ err_free:
 	return ret;
 }
 
+
 static int dualsense_get_firmware_info(struct dualsense *ds)
 {
 	uint8_t *buf;
@@ -772,6 +868,56 @@ err_free:
 	return ret;
 }
 
+<<<<<<< HEAD
+=======
+static int dualsense_lightbar_set_brightness(struct led_classdev *cdev,
+	enum led_brightness brightness)
+{
+	struct led_classdev_mc *mc_cdev = lcdev_to_mccdev(cdev);
+	struct dualsense *ds = container_of(mc_cdev, struct dualsense, lightbar);
+	uint8_t red, green, blue;
+
+	led_mc_calc_color_components(mc_cdev, brightness);
+	red = mc_cdev->subled_info[0].brightness;
+	green = mc_cdev->subled_info[1].brightness;
+	blue = mc_cdev->subled_info[2].brightness;
+
+	dualsense_set_lightbar(ds, red, green, blue);
+	return 0;
+}
+
+static enum led_brightness dualsense_player_led_get_brightness(struct led_classdev *led)
+{
+	struct hid_device *hdev = to_hid_device(led->dev->parent);
+	struct dualsense *ds = hid_get_drvdata(hdev);
+
+	return !!(ds->player_leds_state & BIT(led - ds->player_leds));
+}
+
+static int dualsense_player_led_set_brightness(struct led_classdev *led, enum led_brightness value)
+{
+	struct hid_device *hdev = to_hid_device(led->dev->parent);
+	struct dualsense *ds = hid_get_drvdata(hdev);
+	unsigned long flags;
+	unsigned int led_index;
+
+	spin_lock_irqsave(&ds->base.lock, flags);
+
+	led_index = led - ds->player_leds;
+	if (value == LED_OFF)
+		ds->player_leds_state &= ~BIT(led_index);
+	else
+		ds->player_leds_state |= BIT(led_index);
+
+	ds->update_player_leds = true;
+	spin_unlock_irqrestore(&ds->base.lock, flags);
+
+	dualsense_schedule_work(ds);
+
+	return 0;
+}
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 static void dualsense_init_output_report(struct dualsense *ds, struct dualsense_output_report *rp,
 		void *buf)
 {
@@ -809,6 +955,16 @@ static void dualsense_init_output_report(struct dualsense *ds, struct dualsense_
 		rp->usb = usb;
 		rp->common = &usb->common;
 	}
+}
+
+static inline void dualsense_schedule_work(struct dualsense *ds)
+{
+	unsigned long flags;
+
+	spin_lock_irqsave(&ds->base.lock, flags);
+	if (ds->output_worker_initialized)
+		schedule_work(&ds->output_worker);
+	spin_unlock_irqrestore(&ds->base.lock, flags);
 }
 
 /*
@@ -974,7 +1130,7 @@ static int dualsense_parse_report(struct ps_device *ps_dev, struct hid_report *r
 		spin_unlock_irqrestore(&ps_dev->lock, flags);
 
 		/* Schedule updating of microphone state at hardware level. */
-		schedule_work(&ds->output_worker);
+		dualsense_schedule_work(ds);
 	}
 	ds->last_btn_mic_state = btn_mic_state;
 
@@ -1089,8 +1245,20 @@ static int dualsense_play_effect(struct input_dev *dev, void *data, struct ff_ef
 	ds->motor_right = effect->u.rumble.weak_magnitude / 256;
 	spin_unlock_irqrestore(&ds->base.lock, flags);
 
-	schedule_work(&ds->output_worker);
+	dualsense_schedule_work(ds);
 	return 0;
+}
+
+static void dualsense_remove(struct ps_device *ps_dev)
+{
+	struct dualsense *ds = container_of(ps_dev, struct dualsense, base);
+	unsigned long flags;
+
+	spin_lock_irqsave(&ds->base.lock, flags);
+	ds->output_worker_initialized = false;
+	spin_unlock_irqrestore(&ds->base.lock, flags);
+
+	cancel_work_sync(&ds->output_worker);
 }
 
 static int dualsense_reset_leds(struct dualsense *ds)
@@ -1120,12 +1288,16 @@ static int dualsense_reset_leds(struct dualsense *ds)
 
 static void dualsense_set_lightbar(struct dualsense *ds, uint8_t red, uint8_t green, uint8_t blue)
 {
+	unsigned long flags;
+
+	spin_lock_irqsave(&ds->base.lock, flags);
 	ds->update_lightbar = true;
 	ds->lightbar_red = red;
 	ds->lightbar_green = green;
 	ds->lightbar_blue = blue;
+	spin_unlock_irqrestore(&ds->base.lock, flags);
 
-	schedule_work(&ds->output_worker);
+	dualsense_schedule_work(ds);
 }
 
 static void dualsense_set_player_leds(struct dualsense *ds)
@@ -1148,7 +1320,7 @@ static void dualsense_set_player_leds(struct dualsense *ds)
 
 	ds->update_player_leds = true;
 	ds->player_leds_state = player_ids[player_id];
-	schedule_work(&ds->output_worker);
+	dualsense_schedule_work(ds);
 }
 
 static struct ps_device *dualsense_create(struct hid_device *hdev)
@@ -1156,7 +1328,20 @@ static struct ps_device *dualsense_create(struct hid_device *hdev)
 	struct dualsense *ds;
 	struct ps_device *ps_dev;
 	uint8_t max_output_report_size;
-	int ret;
+	int i, ret;
+
+	static const struct ps_led_info player_leds_info[] = {
+		{ LED_FUNCTION_PLAYER1, "white", dualsense_player_led_get_brightness,
+				dualsense_player_led_set_brightness },
+		{ LED_FUNCTION_PLAYER2, "white", dualsense_player_led_get_brightness,
+				dualsense_player_led_set_brightness },
+		{ LED_FUNCTION_PLAYER3, "white", dualsense_player_led_get_brightness,
+				dualsense_player_led_set_brightness },
+		{ LED_FUNCTION_PLAYER4, "white", dualsense_player_led_get_brightness,
+				dualsense_player_led_set_brightness },
+		{ LED_FUNCTION_PLAYER5, "white", dualsense_player_led_get_brightness,
+				dualsense_player_led_set_brightness }
+	};
 
 	ds = devm_kzalloc(&hdev->dev, sizeof(*ds), GFP_KERNEL);
 	if (!ds)
@@ -1174,7 +1359,9 @@ static struct ps_device *dualsense_create(struct hid_device *hdev)
 	ps_dev->battery_capacity = 100; /* initial value until parse_report. */
 	ps_dev->battery_status = POWER_SUPPLY_STATUS_UNKNOWN;
 	ps_dev->parse_report = dualsense_parse_report;
+	ps_dev->remove = dualsense_remove;
 	INIT_WORK(&ds->output_worker, dualsense_output_worker);
+	ds->output_worker_initialized = true;
 	hid_set_drvdata(hdev, ds);
 
 	max_output_report_size = sizeof(struct dualsense_output_report_bt);
@@ -1225,6 +1412,8 @@ static struct ps_device *dualsense_create(struct hid_device *hdev)
 		ret = PTR_ERR(ds->gamepad);
 		goto err;
 	}
+	/* Use gamepad input device name as primary device name for e.g. LEDs */
+	ps_dev->input_dev_name = dev_name(&ds->gamepad->dev);
 
 	ds->sensors = ps_sensors_create(hdev, DS_ACC_RANGE, DS_ACC_RES_PER_G,
 			DS_GYRO_RANGE, DS_GYRO_RES_PER_DEG_S);
@@ -1252,7 +1441,20 @@ static struct ps_device *dualsense_create(struct hid_device *hdev)
 	if (ret)
 		goto err;
 
+	ret = ps_lightbar_register(ps_dev, &ds->lightbar, dualsense_lightbar_set_brightness);
+	if (ret)
+		goto err;
+
+	/* Set default lightbar color. */
 	dualsense_set_lightbar(ds, 0, 0, 128); /* blue */
+
+	for (i = 0; i < ARRAY_SIZE(player_leds_info); i++) {
+		const struct ps_led_info *led_info = &player_leds_info[i];
+
+		ret = ps_led_register(ps_dev, &ds->player_leds[i], led_info);
+		if (ret < 0)
+			goto err;
+	}
 
 	ret = ps_device_set_player_id(ps_dev);
 	if (ret) {
@@ -1321,12 +1523,6 @@ static int ps_probe(struct hid_device *hdev, const struct hid_device_id *id)
 		}
 	}
 
-	ret = devm_device_add_group(&hdev->dev, &ps_device_attribute_group);
-	if (ret) {
-		hid_err(hdev, "Failed to register sysfs nodes.\n");
-		goto err_close;
-	}
-
 	return ret;
 
 err_close:
@@ -1342,6 +1538,9 @@ static void ps_remove(struct hid_device *hdev)
 
 	ps_devices_list_remove(dev);
 	ps_device_release_player_id(dev);
+
+	if (dev->remove)
+		dev->remove(dev);
 
 	hid_hw_close(hdev);
 	hid_hw_stop(hdev);
@@ -1362,6 +1561,9 @@ static struct hid_driver ps_driver = {
 	.probe		= ps_probe,
 	.remove		= ps_remove,
 	.raw_event	= ps_raw_event,
+	.driver = {
+		.dev_groups = ps_device_groups,
+	},
 };
 
 static int __init ps_init(void)

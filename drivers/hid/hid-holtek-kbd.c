@@ -149,6 +149,13 @@ static int holtek_kbd_probe(struct hid_device *hdev,
 {
 	struct usb_interface *intf;
 	int ret;
+<<<<<<< HEAD
+=======
+
+	if (!hid_is_usb(hdev))
+		return -EINVAL;
+	ret = hid_parse(hdev);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 	if (!hid_is_usb(hdev))
 		return -EINVAL;
@@ -158,6 +165,10 @@ static int holtek_kbd_probe(struct hid_device *hdev,
 		ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
 
 	intf = to_usb_interface(hdev->dev.parent);
+<<<<<<< HEAD
+=======
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	if (!ret && intf->cur_altsetting->desc.bInterfaceNumber == 1) {
 		struct hid_input *hidinput;
 		list_for_each_entry(hidinput, &hdev->inputs, list) {

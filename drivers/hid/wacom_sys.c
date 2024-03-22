@@ -2792,7 +2792,10 @@ static int wacom_probe(struct hid_device *hdev,
 		wacom->usbdev = dev;
 		wacom->intf = intf;
 	}
+<<<<<<< HEAD
 
+=======
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	mutex_init(&wacom->lock);
 	INIT_DELAYED_WORK(&wacom->init_work, wacom_init_work);
 	INIT_WORK(&wacom->wireless_work, wacom_wireless_work);

@@ -35,20 +35,32 @@ TRACE_EVENT(erofs_lookup,
 	TP_STRUCT__entry(
 		__field(dev_t,		dev	)
 		__field(erofs_nid_t,	nid	)
+<<<<<<< HEAD
 		__string(name,		dentry->d_name.name	)
+=======
+		__field(const char *,	name	)
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 		__field(unsigned int,	flags	)
 	),
 
 	TP_fast_assign(
 		__entry->dev	= dir->i_sb->s_dev;
 		__entry->nid	= EROFS_I(dir)->nid;
+<<<<<<< HEAD
 		__assign_str(name, dentry->d_name.name);
+=======
+		__entry->name	= dentry->d_name.name;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 		__entry->flags	= flags;
 	),
 
 	TP_printk("dev = (%d,%d), pnid = %llu, name:%s, flags:%x",
 		show_dev_nid(__entry),
+<<<<<<< HEAD
 		__get_str(name),
+=======
+		__entry->name,
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 		__entry->flags)
 );
 

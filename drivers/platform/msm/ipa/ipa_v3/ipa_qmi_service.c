@@ -1601,7 +1601,13 @@ static void ipa3_q6_clnt_svc_arrive(struct work_struct *work)
 			return;
 		}
 		IPAWANERR("Exit from service arrive fun\n");
+<<<<<<< HEAD
 		return;
+=======
+		//ifdef OPLUS_BUG_COMPATIBILITY
+		return;
+		//endif /* OPLUS_BUG_COMPATIBILITY */
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	}
 
 	if (rc != 0) {

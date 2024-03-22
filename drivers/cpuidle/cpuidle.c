@@ -230,6 +230,9 @@ int __nocfi cpuidle_enter_state(struct cpuidle_device *dev, struct cpuidle_drive
 
 	trace_cpu_idle(index, dev->cpu);
 	time_start = ns_to_ktime(local_clock());
+#ifdef CONFIG_OPLUS_FEATURE_GAME_OPT
+	g_time_in_state_update_idle(dev->cpu, 1);
+#endif
 
 	stop_critical_timings();
 	rcu_idle_enter();
@@ -239,7 +242,14 @@ int __nocfi cpuidle_enter_state(struct cpuidle_device *dev, struct cpuidle_drive
 
 	sched_clock_idle_wakeup_event();
 	time_end = ns_to_ktime(local_clock());
+<<<<<<< HEAD
 	trace_cpu_idle(PWR_EVENT_EXIT, dev->cpu);
+=======
+#ifdef CONFIG_OPLUS_FEATURE_GAME_OPT
+	g_time_in_state_update_idle(dev->cpu, 0);
+#endif
+	trace_cpu_idle_rcuidle(PWR_EVENT_EXIT, dev->cpu);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 	/* The cpu is no longer idle or about to enter idle. */
 	sched_idle_set_state(NULL, -1);

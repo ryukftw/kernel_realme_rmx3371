@@ -255,7 +255,12 @@ out:
 #ifdef CONFIG_DM_VERITY_AVB
 		dm_verity_avb_error_handler();
 #endif
+
+#ifdef OPLUS_BUG_STABILITY
+		panic("dm-verity device corrupted");
+#else
 		kernel_restart("dm-verity device corrupted");
+#endif /* OPLUS_BUG_STABILITY */
 	}
 
 	return 1;
@@ -475,7 +480,11 @@ static int verity_verify_io(struct dm_verity_io *io)
 	struct bvec_iter start;
 	unsigned b;
 	struct crypto_wait wait;
+<<<<<<< HEAD
 	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+=======
+        struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 	for (b = 0; b < io->n_blocks; b++) {
 		int r;
@@ -530,6 +539,7 @@ static int verity_verify_io(struct dm_verity_io *io)
 		else if (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_DATA,
 					   cur_block, NULL, &start) == 0)
 			continue;
+<<<<<<< HEAD
 		else {
 			if (bio->bi_status) {
 				/*
@@ -541,6 +551,19 @@ static int verity_verify_io(struct dm_verity_io *io)
 					      cur_block))
 				return -EIO;
 		}
+=======
+                else {
+                        if (bio->bi_status) {
+                                /*
+                                * Error correction failed; Just return error
+                                */
+                                return -EIO;
+                        }
+                        if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
+                                          cur_block))
+                                return -EIO;
+                }
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	}
 
 	return 0;

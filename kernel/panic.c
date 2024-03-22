@@ -32,6 +32,9 @@
 #include <linux/sysfs.h>
 #include <asm/sections.h>
 #include <soc/qcom/minidump.h>
+#ifdef OPLUS_FEATURE_AGINGTEST
+#include <linux/soc/qcom/smem.h>
+#endif /*OPLUS_FEATURE_AGINGTEST*/
 
 #define PANIC_TIMER_STEP 100
 #define PANIC_BLINK_SPD 18
@@ -169,6 +172,7 @@ void nmi_panic(struct pt_regs *regs, const char *msg)
 }
 EXPORT_SYMBOL(nmi_panic);
 
+<<<<<<< HEAD
 void check_panic_on_warn(const char *origin)
 {
 	unsigned int limit;
@@ -181,6 +185,11 @@ void check_panic_on_warn(const char *origin)
 		panic("%s: system warned too often (kernel.warn_limit is %d)",
 		      origin, limit);
 }
+=======
+#ifdef CONFIG_OPLUS_FEATURE_PANIC_FLUSH
+extern int panic_flush_device_cache(int timeout);
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 /**
  *	panic - halt the system
@@ -198,6 +207,7 @@ void panic(const char *fmt, ...)
 	int state = 0;
 	int old_cpu, this_cpu;
 	bool _crash_kexec_post_notifiers = crash_kexec_post_notifiers;
+<<<<<<< HEAD
 
 	if (panic_on_warn) {
 		/*
@@ -209,6 +219,11 @@ void panic(const char *fmt, ...)
 		panic_on_warn = 0;
 	}
 
+=======
+#ifdef OPLUS_FEATURE_AGINGTEST
+	char *function_name;
+#endif /*OPLUS_FEATURE_AGINGTEST*/
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	/*
 	 * Disable local interrupts. This will prevent panic_smp_self_stop
 	 * from deadlocking the first cpu that invokes the panic, since
@@ -245,9 +260,17 @@ void panic(const char *fmt, ...)
 	vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
 	dump_stack_minidump(0);
+#ifdef CONFIG_OPLUS_FEATURE_PANIC_FLUSH
+	panic_flush_device_cache(2000);
+#endif
 	if (vendor_panic_cb)
 		vendor_panic_cb(0);
 	pr_emerg("Kernel panic - not syncing: %s\n", buf);
+#ifdef OPLUS_FEATURE_AGINGTEST
+	function_name = parse_function_builtin_return_address((unsigned long)__builtin_return_address(0));
+	save_dump_reason_to_smem(buf, function_name);
+#endif /*OPLUS_FEATURE_AGINGTEST*/
+
 #ifdef CONFIG_DEBUG_BUGVERBOSE
 	/*
 	 * Avoid nested stack-dumping if a panic occurs during oops processing

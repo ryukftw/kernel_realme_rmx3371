@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+<<<<<<< HEAD
  * Copyright (c) 2019, 2021, The Linux Foundation. All rights reserved.
+=======
+ * Copyright (c) 2019, 2021,The Linux Foundation. All rights reserved.
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
  * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #define pr_fmt(fmt) "synx: " fmt
@@ -607,15 +611,26 @@ void *synx_from_handle(s32 synx_obj)
 void synx_release_handle(void *pObj)
 {
 	struct synx_table_row *row = pObj;
+<<<<<<< HEAD
 	s32 idx;
+=======
+  	s32 idx;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 	if (!row)
 		return;
 
+<<<<<<< HEAD
 	idx = row->index;
 	mutex_lock(&synx_dev->row_locks[idx]);
 	dma_fence_put(row->fence);
 	mutex_unlock(&synx_dev->row_locks[idx]);
+=======
+  	idx = row->index;
+  	mutex_lock(&synx_dev->row_locks[idx]);
+	dma_fence_put(row->fence);
+  	mutex_unlock(&synx_dev->row_locks[idx]);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 }
 
 s32 synx_create_handle(void *pObj)

@@ -122,6 +122,10 @@ source "drivers/staging/gasket/Kconfig"
 
 source "drivers/staging/axis-fifo/Kconfig"
 
+<<<<<<< HEAD
 source "drivers/staging/qcacld-3.0/Kconfig"
+=======
+#source "drivers/staging/erofs/Kconfig"
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 endif # STAGING

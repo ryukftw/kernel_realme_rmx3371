@@ -15,9 +15,13 @@
 #include <linux/list.h>
 #include <linux/mutex.h>
 #include <linux/seq_file.h>
+<<<<<<< HEAD
 #ifndef __GENKSYMS__
 #include <linux/mm.h>
 #endif
+=======
+#include <linux/mm.h>
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 #include "sysfs.h"
 #include "../kernfs/kernfs-internal.h"
@@ -576,7 +580,12 @@ int sysfs_emit(char *buf, const char *fmt, ...)
 	va_list args;
 	int len;
 
+<<<<<<< HEAD
 	if (WARN(!buf, "invalid sysfs_emit: buf:%p\n", buf))
+=======
+	if (WARN(!buf || offset_in_page(buf),
+		 "invalid sysfs_emit: buf:%p\n", buf))
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 		return 0;
 
 	va_start(args, fmt);
@@ -603,7 +612,11 @@ int sysfs_emit_at(char *buf, int at, const char *fmt, ...)
 	va_list args;
 	int len;
 
+<<<<<<< HEAD
 	if (WARN(!buf || at < 0 || at >= PAGE_SIZE,
+=======
+	if (WARN(!buf || offset_in_page(buf) || at < 0 || at >= PAGE_SIZE,
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 		 "invalid sysfs_emit_at: buf:%p at:%d\n", buf, at))
 		return 0;
 
@@ -613,4 +626,8 @@ int sysfs_emit_at(char *buf, int at, const char *fmt, ...)
 
 	return len;
 }
+<<<<<<< HEAD
 EXPORT_SYMBOL_GPL(sysfs_emit_at);
+=======
+EXPORT_SYMBOL_GPL(sysfs_emit_at);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))

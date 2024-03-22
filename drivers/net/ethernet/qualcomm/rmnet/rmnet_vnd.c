@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+<<<<<<< HEAD
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
+=======
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
  *
  * RMNET Data virtual network driver
  *

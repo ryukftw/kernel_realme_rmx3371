@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+<<<<<<< HEAD
  * Copyright (c) 2019, The Linux Foundation. All rights reserved.
  * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+=======
+ * Copyright (c) 2019, 2022, The Linux Foundation. All rights reserved.
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
  */
 
 #include <linux/io.h>
@@ -21,7 +25,11 @@
 struct dentry *my_direc;
 const char delim[] = ",";
 int columns = NAME_COLUMN |
+<<<<<<< HEAD
 BOUND_COLUMN | ERROR_CODES;
+=======
+	BOUND_COLUMN | STATE_COLUMN | ERROR_CODES;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 void populate_bound_rows(
 	struct synx_table_row *row,
@@ -62,6 +70,11 @@ static ssize_t synx_table_read(struct file *file,
 		cur += scnprintf(cur, end - cur, "|   Name   |");
 	if (columns & BOUND_COLUMN)
 		cur += scnprintf(cur, end - cur, "|   Bound   |");
+<<<<<<< HEAD
+=======
+	if (columns & STATE_COLUMN)
+		cur += scnprintf(cur, end - cur, "|  Status  |");
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	cur += scnprintf(cur, end - cur, "\n");
 	for (i = 1; i < SYNX_MAX_OBJS; i++) {
 		row = &dev->synx_table[i];
@@ -70,7 +83,11 @@ static ssize_t synx_table_read(struct file *file,
 		mutex_lock(&dev->row_locks[index]);
 		if (!row->index) {
 			mutex_unlock(&dev->row_locks[index]);
+<<<<<<< HEAD
 			pr_debug("synx obj at %d invalid\n", index);
+=======
+			pr_warn("synx obj at %d invalid", index);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 			continue;
 		}
 

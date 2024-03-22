@@ -479,12 +479,22 @@ static int do_read_inode(struct inode *inode)
 		}
 	}
 
+<<<<<<< HEAD
 	init_idisk_time(inode);
 
 	/* Need all the flag bits */
 	f2fs_init_read_extent_tree(inode, node_page);
 	f2fs_init_age_extent_tree(inode);
 
+=======
+	F2FS_I(inode)->i_disk_time[0] = inode->i_atime;
+	F2FS_I(inode)->i_disk_time[1] = inode->i_ctime;
+	F2FS_I(inode)->i_disk_time[2] = inode->i_mtime;
+	F2FS_I(inode)->i_disk_time[3] = F2FS_I(inode)->i_crtime;
+#ifdef CONFIG_F2FS_APPBOOST
+	atomic_set(&F2FS_I(inode)->appboost_abort, 0);
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	f2fs_put_page(node_page, 1);
 
 	stat_inc_inline_xattr(inode);

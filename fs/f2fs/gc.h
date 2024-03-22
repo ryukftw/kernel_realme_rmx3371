@@ -15,12 +15,23 @@
 #define DEF_GC_THREAD_MAX_SLEEP_TIME	60000
 #define DEF_GC_THREAD_NOGC_SLEEP_TIME	300000	/* wait 5 min */
 
+<<<<<<< HEAD
 /* choose candidates from sections which has age of more than 7 days */
 #define DEF_GC_THREAD_AGE_THRESHOLD		(60 * 60 * 24 * 7)
 #define DEF_GC_THREAD_CANDIDATE_RATIO		20	/* select 20% oldest sections as candidates */
 #define DEF_GC_THREAD_MAX_CANDIDATE_COUNT	10	/* select at most 10 sections as candidates */
 #define DEF_GC_THREAD_AGE_WEIGHT		60	/* age weight */
 #define DEFAULT_ACCURACY_CLASS			10000	/* accuracy class */
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+/* choose candidates from sections which has age of more than 1 day */
+#define DEF_GC_THREAD_AGE_THRESHOLD	(60 * 60 * 24 * 1)
+#define DEF_GC_THREAD_DIRTY_RATE_THRESHOLD	20	/* select 20% oldest dirty section */
+#define DEF_GC_THREAD_DIRTY_COUNT_THRESHOLD	10	/* select at least 10 dirty section */
+#define DEF_GC_THREAD_AGE_WEIGHT	60	/* age weight */
+#define DEFAULT_ACCURACY_CLASS		10000
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 #define LIMIT_INVALID_BLOCK	40 /* percentage over total user space */
 #define LIMIT_FREE_BLOCK	40 /* percentage over invalid + free space */
@@ -33,7 +44,12 @@
 struct f2fs_gc_kthread {
 	struct task_struct *f2fs_gc_task;
 	wait_queue_head_t gc_wait_queue_head;
-
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	/*
+	 * 2019/08/14, do FG GC in GC thread
+	 */
+	wait_queue_head_t fggc_wait_queue_head;
+#endif
 	/* for gc sleep time */
 	unsigned int urgent_sleep_time;
 	unsigned int min_sleep_time;
@@ -42,12 +58,25 @@ struct f2fs_gc_kthread {
 
 	/* for changing gc mode */
 	unsigned int gc_wake;
+<<<<<<< HEAD
 
 	/* for GC_MERGE mount option */
 	wait_queue_head_t fggc_wq;		/*
 						 * caller of f2fs_balance_fs()
 						 * will wait on this wait queue.
 						 */
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	/* for GC_AT */
+	struct rb_root root;		/* root of victim rb-tree */
+	struct list_head victim_list;	/* linked with all victim entries */
+	unsigned int victim_count;	/* victim count in rb-tree */
+	unsigned int dirty_count_threshold;
+	unsigned int dirty_rate_threshold;
+	unsigned long long age_threshold;
+	unsigned int age_weight;
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 };
 
 struct gc_inode_list {
@@ -55,6 +84,10 @@ struct gc_inode_list {
 	struct radix_tree_root iroot;
 };
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 struct victim_info {
 	unsigned long long mtime;	/* mtime of section */
 	unsigned int segno;		/* section No. */
@@ -70,7 +103,13 @@ struct victim_entry {
 		struct victim_info vi;	/* victim info */
 	};
 	struct list_head list;
+<<<<<<< HEAD
 } __packed;
+=======
+	//unsigned int vblocks;
+};
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 /*
  * inline functions

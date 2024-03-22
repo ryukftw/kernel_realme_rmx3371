@@ -546,7 +546,11 @@ static bool sctp_v6_from_addr_param(union sctp_addr *addr,
 				    union sctp_addr_param *param,
 				    __be16 port, int iif)
 {
+<<<<<<< HEAD
 	if (ntohs(param->v6.param_hdr.length) < sizeof(struct sctp_ipv6addr_param))
+=======
+   if (ntohs(param->v6.param_hdr.length) < sizeof(struct sctp_ipv6addr_param))
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 		return false;
 
 	addr->v6.sin6_family = AF_INET6;

@@ -1456,8 +1456,15 @@ page_hit:
 			  nid, nid_of_node(page), ino_of_node(page),
 			  ofs_of_node(page), cpver_of_node(page),
 			  next_blkaddr_of_node(page));
+<<<<<<< HEAD
 	set_sbi_flag(sbi, SBI_NEED_FSCK);
 	err = -EINVAL;
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+		set_sbi_flag(sbi, SBI_NEED_FSCK);
+#endif
+		err = -EINVAL;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 out_err:
 	ClearPageUptodate(page);
 out_put_err:

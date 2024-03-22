@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
 #include <linux/uaccess.h>
 #include <linux/bitops.h>
+<<<<<<< HEAD
 #include <linux/nospec.h>
+=======
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 /* out-of-line parts */
 
@@ -92,4 +95,8 @@ err_fault:
 	user_access_end();
 	return -EFAULT;
 }
+<<<<<<< HEAD
 EXPORT_SYMBOL(check_zeroed_user);
+=======
+EXPORT_SYMBOL(check_zeroed_user);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))

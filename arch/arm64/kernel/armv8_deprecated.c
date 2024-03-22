@@ -211,12 +211,19 @@ static int emulation_proc_handler(struct ctl_table *table, int write,
 				  loff_t *ppos)
 {
 	int ret = 0;
+<<<<<<< HEAD
 	struct insn_emulation *insn;
 	enum insn_emulation_mode prev_mode;
 
 	mutex_lock(&insn_emulation_mutex);
 	insn = container_of(table->data, struct insn_emulation, current_mode);
 	prev_mode = insn->current_mode;
+=======
+	struct insn_emulation *insn = container_of(table->data, struct insn_emulation, current_mode);
+	enum insn_emulation_mode prev_mode = insn->current_mode;
+
+	mutex_lock(&insn_emulation_mutex);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
 
 	if (ret || !write || prev_mode == insn->current_mode)

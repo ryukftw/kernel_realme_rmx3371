@@ -123,6 +123,16 @@ enum {
 };
 
 struct fuse_conn;
+/**
+ * Reference to lower filesystem file for read/write operations handled in
+ * passthrough mode.
+ * This struct also tracks the credentials to be used for handling read/write
+ * operations.
+ */
+struct fuse_passthrough {
+	struct file *filp;
+	struct cred *cred;
+};
 
 /**
  * Reference to lower filesystem file for read/write operations handled in
@@ -172,6 +182,9 @@ struct fuse_file {
 
 	/** Has flock been performed on this file? */
 	bool flock:1;
+
+	/** Container for data related to the passthrough functionality */
+	struct fuse_passthrough passthrough;
 };
 
 /** One input argument of a request */
@@ -406,6 +419,7 @@ struct fuse_req {
 
 	/** Request is stolen from fuse_file->reserved_req */
 	struct file *stolen_file;
+
 };
 
 struct fuse_iqueue {
@@ -578,6 +592,8 @@ struct fuse_conn {
 	/** handle fs handles killing suid/sgid/cap on write/chown/trunc */
 	unsigned handle_killpriv:1;
 
+	/** Passthrough mode for read/write IO */
+	unsigned int passthrough:1;
 	/*
 	 * The following bitfields are only for optimization purposes
 	 * and hence races in setting them will not cause malfunction
@@ -1050,4 +1066,12 @@ ssize_t fuse_passthrough_read_iter(struct kiocb *iocb, struct iov_iter *to);
 ssize_t fuse_passthrough_write_iter(struct kiocb *iocb, struct iov_iter *from);
 ssize_t fuse_passthrough_mmap(struct file *file, struct vm_area_struct *vma);
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_OPLUS_FEATURE_ACM
+void acm_fuse_init_cache(void);
+void acm_fuse_free_cache(void);
+#endif
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 #endif /* _FS_FUSE_I_H */

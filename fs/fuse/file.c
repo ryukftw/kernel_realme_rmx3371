@@ -21,7 +21,6 @@
 #include <linux/fs.h>
 
 static const struct file_operations fuse_direct_io_file_operations;
-
 static int fuse_send_open(struct fuse_conn *fc, u64 nodeid, struct file *file,
 			  int opcode, struct fuse_open_out *outargp)
 {
@@ -30,6 +29,7 @@ static int fuse_send_open(struct fuse_conn *fc, u64 nodeid, struct file *file,
 
 	memset(&inarg, 0, sizeof(inarg));
 	inarg.flags = file->f_flags & ~(O_CREAT | O_EXCL | O_NOCTTY);
+
 	if (!fc->atomic_o_trunc)
 		inarg.flags &= ~O_TRUNC;
 	args.in.h.opcode = opcode;
@@ -940,6 +940,8 @@ static ssize_t fuse_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
 	if (fuse_is_bad(inode))
 		return -EIO;
 
+	struct fuse_file *ff = iocb->ki_filp->private_data;
+
 	/*
 	 * In auto invalidate mode, always update attributes on read.
 	 * Otherwise, only update if we attempt to read past EOF (to ensure
@@ -953,9 +955,17 @@ static ssize_t fuse_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
 			return err;
 	}
 
+<<<<<<< HEAD
 	if (ff->passthrough.filp)
 		return fuse_passthrough_read_iter(iocb, to);
 	return generic_file_read_iter(iocb, to);
+=======
+	if (ff && ff->passthrough.filp)
+		return fuse_passthrough_read_iter(iocb, to);
+	else
+		return generic_file_read_iter(iocb, to);
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 }
 
 static void fuse_write_fill(struct fuse_req *req, struct fuse_file *ff,
@@ -1193,6 +1203,7 @@ static ssize_t fuse_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
 	struct file *file = iocb->ki_filp;
 	struct address_space *mapping = file->f_mapping;
+	struct fuse_file *ff = file->private_data;
 	ssize_t written = 0;
 	ssize_t written_buffered = 0;
 	struct inode *inode = mapping->host;
@@ -1205,6 +1216,15 @@ static ssize_t fuse_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 
 	if (fuse_is_bad(inode))
 		return -EIO;
+
+	if (ff && ff->passthrough.filp) {
+		/* Update size (EOF optimization) and mode (SUID clearing) */
+		err = fuse_update_attributes(mapping->host, file);
+		if (err)
+			return err;
+
+		return fuse_passthrough_write_iter(iocb, from);
+	}
 
 	if (get_fuse_conn(inode)->writeback_cache) {
 		/* Update size (EOF optimization) and mode (SUID clearing) */

@@ -1357,7 +1357,6 @@ xt_replace_table(struct xt_table *table,
 	      int *error)
 {
 	struct xt_table_info *private;
-	unsigned int cpu;
 	int ret;
 
 	ret = xt_jumpstack_alloc(newinfo);
@@ -1387,27 +1386,19 @@ xt_replace_table(struct xt_table *table,
 	smp_wmb();
 	table->private = newinfo;
 
+<<<<<<< HEAD
 	/* make sure all cpus see new ->private value */
 	smp_mb();
 
+=======
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	/*
 	 * Even though table entries have now been swapped, other CPU's
-	 * may still be using the old entries...
+	 * may still be using the old entries. This is okay, because
+	 * resynchronization happens because of the locking done
+	 * during the get_counters() routine.
 	 */
 	local_bh_enable();
-
-	/* ... so wait for even xt_recseq on all cpus */
-	for_each_possible_cpu(cpu) {
-		seqcount_t *s = &per_cpu(xt_recseq, cpu);
-		u32 seq = raw_read_seqcount(s);
-
-		if (seq & 1) {
-			do {
-				cond_resched();
-				cpu_relax();
-			} while (seq == raw_read_seqcount(s));
-		}
-	}
 
 #ifdef CONFIG_AUDIT
 	if (audit_enabled) {

@@ -68,6 +68,7 @@ static __u8 *holtek_mouse_report_fixup(struct hid_device *hdev, __u8 *rdesc,
 static int holtek_mouse_probe(struct hid_device *hdev,
 			      const struct hid_device_id *id)
 {
+<<<<<<< HEAD
 	int ret;
 
 	if (!hid_is_usb(hdev))
@@ -85,6 +86,10 @@ static int holtek_mouse_probe(struct hid_device *hdev,
 		return ret;
 	}
 
+=======
+	if (!hid_is_usb(hdev))
+		return -EINVAL;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	return 0;
 }
 

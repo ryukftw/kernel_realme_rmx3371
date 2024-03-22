@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2002,2007-2021, The Linux Foundation. All rights reserved.
+<<<<<<< HEAD
  * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+=======
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
  */
 
 #include <linux/slab.h>
@@ -448,7 +452,6 @@ void kgsl_mmu_put_gpuaddr(struct kgsl_memdesc *memdesc)
 
 	if (!kgsl_memdesc_is_global(memdesc))
 		memdesc->gpuaddr = 0;
-
 }
 EXPORT_SYMBOL(kgsl_mmu_put_gpuaddr);
 

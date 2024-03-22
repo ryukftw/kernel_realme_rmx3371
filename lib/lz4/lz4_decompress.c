@@ -150,7 +150,11 @@ static FORCE_INLINE int LZ4_decompress_generic(
 		   && likely((endOnInput ? ip < shortiend : 1) &
 			     (op <= shortoend))) {
 			/* Copy the literals */
+<<<<<<< HEAD
 			LZ4_memcpy(op, ip, endOnInput ? 16 : 8);
+=======
+			memcpy(op, ip, endOnInput ? 16 : 8);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 			op += length; ip += length;
 
 			/*
@@ -169,9 +173,15 @@ static FORCE_INLINE int LZ4_decompress_generic(
 			    (offset >= 8) &&
 			    (dict == withPrefix64k || match >= lowPrefix)) {
 				/* Copy the match. */
+<<<<<<< HEAD
 				LZ4_memcpy(op + 0, match + 0, 8);
 				LZ4_memcpy(op + 8, match + 8, 8);
 				LZ4_memcpy(op + 16, match + 16, 2);
+=======
+				memcpy(op + 0, match + 0, 8);
+				memcpy(op + 8, match + 8, 8);
+				memcpy(op + 16, match + 16, 2);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 				op += length + MINMATCH;
 				/* Both stages worked, load the next token. */
 				continue;
@@ -268,12 +278,17 @@ static FORCE_INLINE int LZ4_decompress_generic(
 			ip += length;
 			op += length;
 
+<<<<<<< HEAD
 			/* Necessarily EOF when !partialDecoding.
 			 * When partialDecoding, it is EOF if we've either
 			 * filled the output buffer or
 			 * can't proceed with reading an offset for following match.
 			 */
 			if (!partialDecoding || (cpy == oend) || (ip >= (iend - 2)))
+=======
+			/* Necessarily EOF, due to parsing restrictions */
+			if (!partialDecoding || (cpy == oend))
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 				break;
 		} else {
 			/* may overwrite up to WILDCOPYLENGTH beyond cpy */
@@ -391,7 +406,11 @@ _copy_match:
 				while (op < copyEnd)
 					*op++ = *match++;
 			} else {
+<<<<<<< HEAD
 				LZ4_memcpy(op, match, mlen);
+=======
+				memcpy(op, match, mlen);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 			}
 			op = copyEnd;
 			if (op == oend)
@@ -405,7 +424,11 @@ _copy_match:
 			op[2] = match[2];
 			op[3] = match[3];
 			match += inc32table[offset];
+<<<<<<< HEAD
 			LZ4_memcpy(op + 4, match, 4);
+=======
+			memcpy(op + 4, match, 4);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 			match -= dec64table[offset];
 		} else {
 			LZ4_copy8(op, match);

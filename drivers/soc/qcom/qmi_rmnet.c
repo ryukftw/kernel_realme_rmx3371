@@ -339,9 +339,12 @@ static void __qmi_rmnet_bearer_put(struct net_device *dev,
 
 			mq->bearer = NULL;
 			mq->drop_on_remove = reset;
+<<<<<<< HEAD
 			/* Let other CPU's see this update so that packets are
 			 * dropped, instead of further processing packets
 			 */
+=======
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 			smp_mb();
 
 			qmi_rmnet_flow_control(dev, i, 1);
@@ -372,9 +375,12 @@ static void __qmi_rmnet_update_mq(struct net_device *dev,
 	if (!mq->bearer) {
 		mq->bearer = bearer;
 		mq->drop_on_remove = false;
+<<<<<<< HEAD
 		/* Let other CPU's see this update so that packets are
 		 * dropped, instead of further processing packets
 		 */
+=======
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 		smp_mb();
 
 		if (dfc_mode == DFC_MODE_SA) {

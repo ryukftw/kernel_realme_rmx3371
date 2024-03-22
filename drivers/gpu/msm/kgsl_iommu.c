@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2011-2021, The Linux Foundation. All rights reserved.
+<<<<<<< HEAD
  * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+=======
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
  */
 
 #include <linux/compat.h>
@@ -20,6 +24,10 @@
 #include "kgsl_pwrctrl.h"
 #include "kgsl_sharedmem.h"
 #include "kgsl_trace.h"
+
+#ifdef OPLUS_BUG_STABILITY
+#include <soc/oplus/system/oplus_mm_kevent_fb.h>
+#endif /*OPLUS_BUG_STABILITY*/
 
 #define _IOMMU_PRIV(_mmu) (&((_mmu)->priv.iommu))
 
@@ -826,6 +834,13 @@ static int kgsl_iommu_fault_handler(struct iommu_domain *domain,
 		no_page_fault_log = kgsl_mmu_log_fault_addr(mmu, ptbase, addr);
 
 	if (!no_page_fault_log && __ratelimit(&_rs)) {
+		#ifdef OPLUS_BUG_STABILITY
+		mm_fb_kevent(OPLUS_MM_DIRVER_FB_EVENT_DISPLAY,
+		    OPLUS_DISPLAY_EVENTID_GPU_FAULT,
+		    "gpu fault", MM_FB_KEY_RATELIMIT_1H,
+		    "pid=%08lx,comm=%d", ptname, comm);
+		#endif /*OPLUS_BUG_STABILITY*/
+
 		dev_crit(ctx->kgsldev->dev,
 			"GPU PAGE FAULT: addr = %lX pid= %d name=%s\n", addr,
 			ptname, comm);
@@ -1046,6 +1061,7 @@ static void setup_64bit_pagetable(struct kgsl_mmu *mmu,
 		pt->compat_va_end = KGSL_IOMMU_SECURE_BASE(mmu);
 		pt->va_start = KGSL_IOMMU_VA_BASE64;
 		pt->va_end = KGSL_IOMMU_VA_END64;
+
 	}
 
 	if (pagetable->name != KGSL_MMU_GLOBAL_PT &&
@@ -2592,6 +2608,7 @@ static bool kgsl_iommu_addr_in_range(struct kgsl_pagetable *pagetable,
 	if (gpuaddr == 0 || end < gpuaddr)
 		return false;
 
+<<<<<<< HEAD
 	if (gpuaddr >= pt->va_start && end <= pt->va_end)
 		return true;
 
@@ -2599,6 +2616,16 @@ static bool kgsl_iommu_addr_in_range(struct kgsl_pagetable *pagetable,
 		return true;
 
 	if (gpuaddr >= pt->svm_start && end <= pt->svm_end)
+=======
+	if (gpuaddr >= pt->va_start && (gpuaddr + size) < pt->va_end)
+		return true;
+
+	if (gpuaddr >= pt->compat_va_start &&
+			(gpuaddr + size) < pt->compat_va_end)
+		return true;
+
+	if (gpuaddr >= pt->svm_start && (gpuaddr + size) < pt->svm_end)
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 		return true;
 
 	return false;

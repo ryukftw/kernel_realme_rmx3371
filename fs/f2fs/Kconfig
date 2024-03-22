@@ -99,6 +99,40 @@ config F2FS_FAULT_INJECTION
 
 	  If unsure, say N.
 
+config F2FS_BD_STAT
+	bool "F2FS Bigdata Statisitics Information"
+	depends on F2FS_FS
+	default n
+	help
+	  contains the f2fs big-data statistics information about specific partition
+	  mounted as f2fs.
+	  /proc/fs/f2fs/<partition>/base_info:
+	    - basic statistics information
+	  /proc/fs/f2fs/<partition>/discard_info
+	    - discard statistics information
+	  /proc/fs/f2fs/<partition>/cp_info
+	    - checkpoint statistics information
+	  /proc/fs/f2fs/<partition>/gc_info
+	    - gc statistics information
+	  /proc/fs/f2fs/<partition>/fsync_info
+	    - fsync statistics information
+	  /proc/fs/f2fs/<partition>/hotcold_info
+	    - hot/cold statistics information
+
+config OPLUS_FEATURE_OF2FS
+	bool "OF2FS independent repo"
+	depends on F2FS_FS
+	default n
+	help
+	  define this config to switch f2fs repo.
+
+config F2FS_GRADING_SSR
+	bool "F2FS grading ssr"
+	depends on F2FS_FS
+	default n
+	help
+	  use grading ssr to improve the end performance
+
 config F2FS_FS_COMPRESSION
 	bool "F2FS compression feature"
 	depends on F2FS_FS
@@ -142,6 +176,7 @@ config F2FS_FS_ZSTD
 	help
 	  Support ZSTD compress algorithm, if unsure, say Y.
 
+<<<<<<< HEAD
 config F2FS_IOSTAT
 	bool "F2FS IO statistics information"
 	depends on F2FS_FS
@@ -157,3 +192,10 @@ config F2FS_UNFAIR_RWSEM
 	help
 	  Use unfair rw_semaphore, if system configured IO priority by block
 	  cgroup.
+=======
+config F2FS_APPBOOST
+       bool
+       default y
+       help
+         Enable Appboost
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))

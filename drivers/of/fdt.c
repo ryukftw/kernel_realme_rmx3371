@@ -31,7 +31,9 @@
 #include <asm/page.h>
 
 #include "of_private.h"
-
+#ifdef CONFIG_PARAM_READ_WRITE
+void init_param_mem_base_size(phys_addr_t base, unsigned long size);
+#endif
 /*
  * of_fdt_limit_memory - limit the number of regions in the /memory node
  * @limit: maximum entries
@@ -672,9 +674,18 @@ static int __init __reserved_mem_reserve_reg(unsigned long node,
 			pr_debug("Reserved memory: reserved region for node '%s': base %pa, size %lu MiB\n",
 				uname, &base, (unsigned long)(size / SZ_1M));
 		else
+<<<<<<< HEAD
 			pr_info("Reserved memory: failed to reserve memory for node '%s': base %pa, size %lu MiB\n",
 				uname, &base, (unsigned long)(size / SZ_1M));
 
+=======
+			pr_info("Reserved memory: failed to reserve memory for node '%s': base %pa, size %ld MiB\n",
+				uname, &base, (unsigned long)size / SZ_1M);
+		#ifdef CONFIG_PARAM_READ_WRITE
+		if (!strncmp(uname, "param_mem", 9))
+			init_param_mem_base_size(base, size);
+		#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 		len -= t_len;
 		if (first) {
 			fdt_reserved_mem_save_node(node, uname, base, size);

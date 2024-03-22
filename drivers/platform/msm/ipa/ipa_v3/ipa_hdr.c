@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2019,2021 The Linux Foundation. All rights reserved.
+<<<<<<< HEAD
  * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+=======
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
  */
 
 #include "ipa_i.h"
@@ -98,8 +102,13 @@ static int ipa3_hdr_proc_ctx_to_hw_format(struct ipa_mem_buffer *mem,
 				!entry->offset_entry ||
 				entry->hdr->hdr_len == 0 ||
 				entry->hdr->hdr_len >
+<<<<<<< HEAD
 				ipa_hdr_bin_sz[IPA_HDR_BIN_MAX - 1])) {
 			IPAERR_RL("Found invalid hdr entry\n");
+=======
+				ipa_hdr_bin_sz[IPA_HDR_BIN_MAX - 1])){
+			IPAERR_RL("Found invalid hdr entry");
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 			return -EINVAL;
 		}
 
@@ -164,9 +173,15 @@ alloc:
 	hdr_base_addr = (ipa3_ctx->hdr_tbl_lcl) ? IPA_MEM_PART(apps_hdr_ofst) :
 		hdr_sys_addr;
 	ret = ipa3_hdr_proc_ctx_to_hw_format(aligned_mem, hdr_base_addr);
+<<<<<<< HEAD
 	if (ret) {
 		dma_free_coherent(ipa3_ctx->pdev, mem->size, mem->base, mem->phys_base);
 		return ret;
+=======
+	if(ret){
+	    dma_free_coherent(ipa3_ctx->pdev, mem->size, mem->base, mem->phys_base);
+	    return ret;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	}
 	return ret;
 }

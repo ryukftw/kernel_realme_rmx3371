@@ -23,6 +23,7 @@
 #define GET_R2L_SEGNO(free_i, segno)	((segno) + (free_i)->start_segno)
 
 #define IS_DATASEG(t)	((t) <= CURSEG_COLD_DATA)
+<<<<<<< HEAD
 #define IS_NODESEG(t)	((t) >= CURSEG_HOT_NODE && (t) <= CURSEG_COLD_NODE)
 #define SE_PAGETYPE(se)	((IS_NODESEG((se)->type) ? NODE : DATA))
 
@@ -32,20 +33,59 @@ static inline void sanity_check_seg_type(struct f2fs_sb_info *sbi,
 	f2fs_bug_on(sbi, seg_type >= NR_PERSISTENT_LOG);
 }
 
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+#define IS_NODESEG(t)	((t) >= CURSEG_HOT_NODE && (t) <= CURSEG_COLD_NODE)
+#else
+#define IS_NODESEG(t)	((t) >= CURSEG_HOT_NODE)
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 #define IS_HOT(t)	((t) == CURSEG_HOT_NODE || (t) == CURSEG_HOT_DATA)
 #define IS_WARM(t)	((t) == CURSEG_WARM_NODE || (t) == CURSEG_WARM_DATA)
 #define IS_COLD(t)	((t) == CURSEG_COLD_NODE || (t) == CURSEG_COLD_DATA)
 
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+#define IS_CURSEG(sbi, seg)                                             \
+        (((seg) == CURSEG_I(sbi, CURSEG_HOT_DATA)->segno) ||    \
+         ((seg) == CURSEG_I(sbi, CURSEG_WARM_DATA)->segno) ||   \
+         ((seg) == CURSEG_I(sbi, CURSEG_COLD_DATA)->segno) ||   \
+         ((seg) == CURSEG_I(sbi, CURSEG_HOT_NODE)->segno) ||    \
+         ((seg) == CURSEG_I(sbi, CURSEG_WARM_NODE)->segno) ||   \
+	 ((seg) == CURSEG_I(sbi, CURSEG_COLD_NODE)->segno) ||	\
+	 ((seg) == CURSEG_I(sbi, CURSEG_FRAGMENT_DATA)->segno))
+#else
 #define IS_CURSEG(sbi, seg)						\
 	(((seg) == CURSEG_I(sbi, CURSEG_HOT_DATA)->segno) ||	\
 	 ((seg) == CURSEG_I(sbi, CURSEG_WARM_DATA)->segno) ||	\
 	 ((seg) == CURSEG_I(sbi, CURSEG_COLD_DATA)->segno) ||	\
 	 ((seg) == CURSEG_I(sbi, CURSEG_HOT_NODE)->segno) ||	\
 	 ((seg) == CURSEG_I(sbi, CURSEG_WARM_NODE)->segno) ||	\
+<<<<<<< HEAD
 	 ((seg) == CURSEG_I(sbi, CURSEG_COLD_NODE)->segno) ||	\
 	 ((seg) == CURSEG_I(sbi, CURSEG_COLD_DATA_PINNED)->segno) ||	\
 	 ((seg) == CURSEG_I(sbi, CURSEG_ALL_DATA_ATGC)->segno))
 
+=======
+	 ((seg) == CURSEG_I(sbi, CURSEG_COLD_NODE)->segno))
+#endif
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+#define IS_CURSEC(sbi, secno)                                           \
+        (((secno) == CURSEG_I(sbi, CURSEG_HOT_DATA)->segno /            \
+          (sbi)->segs_per_sec) ||       \
+         ((secno) == CURSEG_I(sbi, CURSEG_WARM_DATA)->segno /           \
+          (sbi)->segs_per_sec) ||       \
+         ((secno) == CURSEG_I(sbi, CURSEG_COLD_DATA)->segno /           \
+          (sbi)->segs_per_sec) ||       \
+         ((secno) == CURSEG_I(sbi, CURSEG_HOT_NODE)->segno /            \
+          (sbi)->segs_per_sec) ||       \
+         ((secno) == CURSEG_I(sbi, CURSEG_WARM_NODE)->segno /           \
+          (sbi)->segs_per_sec) ||       \
+         ((secno) == CURSEG_I(sbi, CURSEG_COLD_NODE)->segno /           \
+	  (sbi)->segs_per_sec) ||	\
+	 ((secno) == CURSEG_I(sbi, CURSEG_FRAGMENT_DATA)->segno /	\
+	  (sbi)->segs_per_sec))
+#else
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 #define IS_CURSEC(sbi, secno)						\
 	(((secno) == CURSEG_I(sbi, CURSEG_HOT_DATA)->segno /		\
 	  (sbi)->segs_per_sec) ||	\
@@ -58,11 +98,16 @@ static inline void sanity_check_seg_type(struct f2fs_sb_info *sbi,
 	 ((secno) == CURSEG_I(sbi, CURSEG_WARM_NODE)->segno /		\
 	  (sbi)->segs_per_sec) ||	\
 	 ((secno) == CURSEG_I(sbi, CURSEG_COLD_NODE)->segno /		\
+<<<<<<< HEAD
 	  (sbi)->segs_per_sec) ||	\
 	 ((secno) == CURSEG_I(sbi, CURSEG_COLD_DATA_PINNED)->segno /	\
 	  (sbi)->segs_per_sec) ||	\
 	 ((secno) == CURSEG_I(sbi, CURSEG_ALL_DATA_ATGC)->segno /	\
 	  (sbi)->segs_per_sec))
+=======
+	  (sbi)->segs_per_sec))
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 #define MAIN_BLKADDR(sbi)						\
 	(SM_I(sbi) ? SM_I(sbi)->main_blkaddr : 				\
@@ -135,6 +180,20 @@ static inline void sanity_check_seg_type(struct f2fs_sb_info *sbi,
 #define SECTOR_TO_BLOCK(sectors)					\
 	((sectors) >> F2FS_LOG_SECTORS_PER_BLOCK)
 
+#ifdef CONFIG_F2FS_GRADING_SSR
+#define KBS_PER_SEGMENT 2048
+#endif
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+#define SSR_CONTIG_DIRTY_NUMS	32	/*Dirty pages for LFS alloction in grading ssr . */
+#define SSR_CONTIG_LARGE	256	/*Larege files */
+
+enum {
+	SEQ_NONE,
+	SEQ_32BLKS,
+	SEQ_256BLKS
+};
+#endif
+
 /*
  * indicate a block allocation direction: RIGHT and LEFT.
  * RIGHT means allocating new sections towards the end of volume.
@@ -142,7 +201,10 @@ static inline void sanity_check_seg_type(struct f2fs_sb_info *sbi,
  */
 enum {
 	ALLOC_RIGHT = 0,
-	ALLOC_LEFT
+	ALLOC_LEFT,
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	ALLOC_SPREAD,	/* for subdivision allocation only */
+#endif
 };
 
 /*
@@ -155,7 +217,13 @@ enum {
 enum {
 	LFS = 0,
 	SSR,
+<<<<<<< HEAD
 	AT_SSR,
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	ASSR,          /*ASSR (Age based Slack Space Recycle) merges fragments into fragmented segment which has similar aging degree.*/
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 };
 
 /*
@@ -167,7 +235,13 @@ enum {
 enum {
 	GC_CB = 0,
 	GC_GREEDY,
+<<<<<<< HEAD
 	GC_AT,
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	GC_AT,         /*GC_AT is based on age-threshold algorithm.*/
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	ALLOC_NEXT,
 	FLUSH_DEVICE,
 	MAX_GC_POLICY,
@@ -181,7 +255,12 @@ enum {
 	BG_GC = 0,
 	FG_GC,
 };
-
+#ifdef CONFIG_F2FS_GRADING_SSR
+enum {
+	GRADING_SSR_OFF = 0,
+	GRADING_SSR_ON
+};
+#endif
 /* for a function parameter to select a victim segment */
 struct victim_sel_policy {
 	int alloc_mode;			/* LFS or SSR */
@@ -194,10 +273,21 @@ struct victim_sel_policy {
 	unsigned int offset;		/* last scanned bitmap offset */
 	unsigned int ofs_unit;		/* bitmap search unit */
 	unsigned int min_cost;		/* minimum cost */
+<<<<<<< HEAD
 	unsigned long long oldest_age;	/* oldest age of segments having the same min cost */
 	unsigned int min_segno;		/* segment # having min. cost */
 	unsigned long long age;		/* mtime of GCed section*/
 	unsigned long long age_threshold;/* age threshold */
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	unsigned long long oldest_age;	/* oldest age of segments having the same min cost */
+#endif
+	unsigned int min_segno;		/* segment # having min. cost */
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	unsigned long long age;		/* mtime of GCed section*/
+	unsigned long long age_threshold;/* age threshold */
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 };
 
 struct seg_entry {
@@ -222,6 +312,21 @@ struct sec_entry {
 	unsigned int valid_blocks;	/* # of valid blocks in a section */
 };
 
+<<<<<<< HEAD
+=======
+struct segment_allocation {
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	void (*allocate_segment)(struct f2fs_sb_info *, int, bool, int);
+	void (*get_new_segment)(struct f2fs_sb_info *,
+					unsigned int *, bool , int);
+	void (*new_curseg)(struct f2fs_sb_info *, int, bool);
+	void (*__new_curseg)(struct f2fs_sb_info *, struct curseg_info *,int, bool);
+#else
+	void (*allocate_segment)(struct f2fs_sb_info *, int, bool);
+#endif
+};
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 #define MAX_SKIP_GC_COUNT			16
 
 struct revoke_entry {
@@ -256,10 +361,19 @@ struct sit_info {
 	unsigned long long elapsed_time;	/* elapsed time after mount */
 	unsigned long long mounted_time;	/* mount time */
 	unsigned long long min_mtime;		/* min. modification time */
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	unsigned long long dirty_min_mtime;	/* rerange candidates in GC_AT */
+#endif
 	unsigned long long max_mtime;		/* max. modification time */
+<<<<<<< HEAD
 	unsigned long long dirty_min_mtime;	/* rerange candidates in GC_AT */
 	unsigned long long dirty_max_mtime;	/* rerange candidates in GC_AT */
 
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	unsigned long long dirty_max_mtime;	/* rerange candidates in GC_AT */
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	unsigned int last_victim[MAX_GC_POLICY]; /* last victim segment # */
 };
 
@@ -299,8 +413,18 @@ struct dirty_seglist_info {
 
 /* victim selection function for cleaning and SSR */
 struct victim_selection {
+<<<<<<< HEAD
 	int (*get_victim)(struct f2fs_sb_info *, unsigned int *,
 					int, int, char, unsigned long long);
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+int (*get_victim)(struct f2fs_sb_info *, unsigned int *,
+					int, int, char, unsigned long long);
+#else
+int (*get_victim)(struct f2fs_sb_info *, unsigned int *,
+							int, int, char);
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 };
 
 /* for active log information */
@@ -315,8 +439,15 @@ struct curseg_info {
 	unsigned short next_blkoff;		/* next block offset to write */
 	unsigned int zone;			/* current zone number */
 	unsigned int next_segno;		/* preallocated segment */
+<<<<<<< HEAD
 	int fragment_remained_chunk;		/* remained block size in a chunk for block fragmentation mode */
 	bool inited;				/* indicate inmem log is inited */
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	bool inited;				/* indicate inmem log is inited */
+	char type;
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 };
 
 struct sit_entry_set {
@@ -662,10 +793,21 @@ static inline int utilization(struct f2fs_sb_info *sbi)
  * F2FS_IPU_NOCACHE - disable IPU bio cache.
  * F2FS_IPU_HONOR_OPU_WRITE - use OPU write prior to IPU write if inode has
  *                            FI_OPU_WRITE flag.
+<<<<<<< HEAD
  * F2FS_IPU_DISABLE - disable IPU. (=default option in LFS mode)
+=======
+ * F2FS_IPUT_DISABLE - disable IPU. (=default option in LFS mode)
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
  */
 #define DEF_MIN_IPU_UTIL	70
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+/*
+ * 2019/08/12, enlarge min_fsync_blocks to optimize performance
+ */
+#define DEF_MIN_FSYNC_BLOCKS	20
+#else
 #define DEF_MIN_FSYNC_BLOCKS	8
+#endif
 #define DEF_MIN_HOT_BLOCKS	16
 
 #define SMALL_VOLUME_SEGMENTS	(16 * 512)	/* 16GB */
@@ -927,3 +1069,29 @@ wake_up:
 	dcc->discard_wake = 1;
 	wake_up_interruptible_all(&dcc->discard_wait_queue);
 }
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+/*
+* 2020-1-14, add for oDiscard decoupling
+*/
+static inline void wake_up_discard_thread_aggressive(struct f2fs_sb_info *sbi,
+						     int policy)
+{
+	struct discard_cmd_control *dcc = SM_I(sbi)->dcc_info;
+
+	if (!sbi->dc_opt_enable)
+		return;
+
+	dcc->discard_wake = policy;
+	wake_up_interruptible_all(&dcc->discard_wait_queue);
+}
+
+static inline int check_io_seq(int blks)
+{
+	if (blks >= SSR_CONTIG_LARGE)
+		return SEQ_256BLKS;
+	else if (blks >= SSR_CONTIG_DIRTY_NUMS)
+		return SEQ_32BLKS;
+	else
+		return SEQ_NONE;
+}
+#endif

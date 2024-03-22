@@ -2359,8 +2359,13 @@ int sctp_process_init(struct sctp_association *asoc, struct sctp_chunk *chunk,
 
 	/* Process the initialization parameters.  */
 	sctp_walk_params(param, peer_init, init_hdr.params) {
+<<<<<<< HEAD
 		if (!src_match &&
 		    (param.p->type == SCTP_PARAM_IPV4_ADDRESS ||
+=======
+        if (!src_match &&
+ 		    (param.p->type == SCTP_PARAM_IPV4_ADDRESS ||
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 		     param.p->type == SCTP_PARAM_IPV6_ADDRESS)) {
 			af = sctp_get_af_specific(param_type2af(param.p->type));
 			if (!af->from_addr_param(&addr, param.addr,

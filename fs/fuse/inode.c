@@ -49,6 +49,7 @@ MODULE_PARM_DESC(max_user_congthresh,
  "Global limit for the maximum congestion threshold an "
  "unprivileged user can set");
 
+
 #define FUSE_SUPER_MAGIC 0x65735546
 
 #define FUSE_DEFAULT_BLKSIZE 512
@@ -928,6 +929,12 @@ static void process_init_reply(struct fuse_conn *fc, struct fuse_req *req)
 				fc->async_dio = 1;
 			if (arg->flags & FUSE_WRITEBACK_CACHE)
 				fc->writeback_cache = 1;
+			if (arg->flags & FUSE_PASSTHROUGH) {
+				fc->passthrough = 1;
+				/* Prevent further stacking */
+				fc->sb->s_stack_depth =
+					FILESYSTEM_MAX_STACK_DEPTH;
+			}
 			if (arg->flags & FUSE_PARALLEL_DIROPS)
 				fc->parallel_dirops = 1;
 			if (arg->flags & FUSE_HANDLE_KILLPRIV)
@@ -978,7 +985,12 @@ static void fuse_send_init(struct fuse_conn *fc, struct fuse_req *req)
 		FUSE_DO_READDIRPLUS | FUSE_READDIRPLUS_AUTO | FUSE_ASYNC_DIO |
 		FUSE_WRITEBACK_CACHE | FUSE_NO_OPEN_SUPPORT |
 		FUSE_PARALLEL_DIROPS | FUSE_HANDLE_KILLPRIV | FUSE_POSIX_ACL |
+<<<<<<< HEAD
 		FUSE_ABORT_ERROR | FUSE_PASSTHROUGH;
+=======
+		FUSE_PASSTHROUGH;
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	req->in.h.opcode = FUSE_INIT;
 	req->in.numargs = 1;
 	req->in.args[0].size = sizeof(*arg);
@@ -1220,6 +1232,10 @@ static int fuse_fill_super(struct super_block *sb, void *data, int silent)
 
 	fuse_send_init(fc, init_req);
 
+#ifdef CONFIG_OPLUS_FEATURE_ACM
+	acm_fuse_init_cache();
+#endif
+
 	return 0;
 
  err_unlock:
@@ -1251,6 +1267,9 @@ static void fuse_sb_destroy(struct super_block *sb)
 	struct fuse_conn *fc = get_fuse_conn_super(sb);
 
 	if (fc) {
+#ifdef CONFIG_OPLUS_FEATURE_ACM
+		acm_fuse_free_cache();
+#endif
 		fuse_send_destroy(fc);
 
 		fuse_abort_conn(fc, false);

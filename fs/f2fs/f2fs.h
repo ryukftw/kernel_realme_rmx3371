@@ -27,6 +27,10 @@
 #include <linux/fscrypt.h>
 #include <linux/fsverity.h>
 
+#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
+#include <linux/iomonitor/iomonitor.h>
+#endif /*OPLUS_FEATURE_IOMONITOR*/
+
 #ifdef CONFIG_F2FS_CHECK_FS
 #define f2fs_bug_on(sbi, condition)	BUG_ON(condition)
 #else
@@ -53,10 +57,21 @@ enum {
 	FAULT_CHECKPOINT,
 	FAULT_DISCARD,
 	FAULT_WRITE_IO,
+<<<<<<< HEAD
 	FAULT_SLAB_ALLOC,
 	FAULT_DQUOT_INIT,
 	FAULT_LOCK_OP,
 	FAULT_BLKADDR,
+=======
+#ifdef CONFIG_F2FS_APPBOOST
+	FAULT_READ_ERROR,
+	FAULT_WRITE_ERROR,
+	FAULT_PAGE_ERROR,
+	FAULT_FSYNC_ERROR,
+	FAULT_FLUSH_ERROR,
+	FAULT_WRITE_TAIL_ERROR,
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	FAULT_MAX,
 };
 
@@ -91,6 +106,9 @@ extern const char *f2fs_fault_name[FAULT_MAX];
 #define F2FS_MOUNT_READ_EXTENT_CACHE	0x00002000
 #define F2FS_MOUNT_DATA_FLUSH		0x00008000
 #define F2FS_MOUNT_FAULT_INJECTION	0x00010000
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+#define F2FS_MOUNT_LFS			0x00040000
+#endif
 #define F2FS_MOUNT_USRQUOTA		0x00080000
 #define F2FS_MOUNT_GRPQUOTA		0x00100000
 #define F2FS_MOUNT_PRJQUOTA		0x00200000
@@ -105,10 +123,24 @@ extern const char *f2fs_fault_name[FAULT_MAX];
 #define F2FS_MOUNT_COMPRESS_CACHE	0x40000000
 #define F2FS_MOUNT_AGE_EXTENT_CACHE	0x80000000
 
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+/*
+ * private mount options
+ */
+#define F2FS_MOUNT_PRIV_NOATGC           0x00000001
+#define F2FS_MOUNT_PRIV_NOSUBDIVISION    0x00000002
+#endif
+
 #define F2FS_OPTION(sbi)	((sbi)->mount_opt)
 #define clear_opt(sbi, option)	(F2FS_OPTION(sbi).opt &= ~F2FS_MOUNT_##option)
 #define set_opt(sbi, option)	(F2FS_OPTION(sbi).opt |= F2FS_MOUNT_##option)
 #define test_opt(sbi, option)	(F2FS_OPTION(sbi).opt & F2FS_MOUNT_##option)
+
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+#define clear_priv_opt(sbi, option)      (sbi->mount_opt.priv_opt &= ~F2FS_MOUNT_PRIV_##option)
+#define set_priv_opt(sbi, option)                (sbi->mount_opt.priv_opt |= F2FS_MOUNT_PRIV_##option)
+#define test_priv_opt(sbi, option)       (sbi->mount_opt.priv_opt & F2FS_MOUNT_PRIV_##option)
+#endif
 
 #define ver_after(a, b)	(typecheck(unsigned long long, a) &&		\
 		typecheck(unsigned long long, b) &&			\
@@ -138,6 +170,9 @@ struct f2fs_rwsem {
 
 struct f2fs_mount_info {
 	unsigned int opt;
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	unsigned int priv_opt;
+#endif
 	int write_io_size_bits;		/* Write IO size bits */
 	block_t root_reserved_blocks;	/* root reserved blocks */
 	kuid_t s_resuid;		/* reserved blocks for uid */
@@ -228,9 +263,27 @@ enum {
 #define CP_RESIZE 	0x00000080
 
 #define DEF_MAX_DISCARD_REQUEST		8	/* issue 8 discards per round */
+
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+/*
+ * 2019-10-15, add for oDiscard
+ */
+#define DEF_MIN_DISCARD_ISSUE_TIME	100	/* 100 ms, if exists */
+#define DEF_MID_DISCARD_ISSUE_TIME	2000	/* 2 s, if dev is busy */
+#define DEF_MAX_DISCARD_ISSUE_TIME	120000	/* 120 s, if no candidates */
+#define DEF_DISCARD_WAKEUP_INTERVAL	900	/* 900 secs */
+#define DEF_DISCARD_BALANCE_TIME	8000	/* 8000 ms */
+#define DEF_URGENT_DISCARD_ISSUE_TIME	50	/* 50 ms, if force */
+#define DEF_DISCARD_EMPTY_ISSUE_TIME	600000	/* 10 min, undiscard block=0 */
+/*
+ * 2019/08/12, set default idle interval to 1s
+ */
+#define DEF_GC_IDLE_INTERVAL		1	/* 1 secs */
+#else
 #define DEF_MIN_DISCARD_ISSUE_TIME	50	/* 50 ms, if exists */
 #define DEF_MID_DISCARD_ISSUE_TIME	500	/* 500 ms, if device busy */
 #define DEF_MAX_DISCARD_ISSUE_TIME	60000	/* 60 s, if no candidates */
+#endif
 #define DEF_DISCARD_URGENT_UTIL		80	/* do more discard over 80% */
 #define DEF_CP_INTERVAL			60	/* 60 secs */
 #define DEF_IDLE_INTERVAL		5	/* 5 secs */
@@ -371,6 +424,9 @@ struct discard_cmd {
 	int error;			/* bio error */
 	spinlock_t lock;		/* for state/bio_ref updating */
 	unsigned short bio_ref;		/* bio reference count */
+#ifdef CONFIG_F2FS_BD_STAT
+	u64 discard_time;
+#endif
 };
 
 enum {
@@ -378,6 +434,13 @@ enum {
 	DPOLICY_FORCE,
 	DPOLICY_FSTRIM,
 	DPOLICY_UMOUNT,
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	/*
+	 * 2020-1-14, add for oDiscard decoupling
+	 */
+	DPOLICY_BALANCE,
+	DPOLICY_PERFORMANCE,
+#endif
 	MAX_DPOLICY,
 };
 
@@ -393,6 +456,12 @@ struct discard_policy {
 	bool ordered;			/* issue discard by lba order */
 	bool timeout;			/* discard timeout for put_super */
 	unsigned int granularity;	/* discard granularity */
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	/*
+	 * 2019-10-15, add for oDiscard
+	 */
+	bool io_busy;			/* interrupt by user io */
+#endif
 };
 
 struct discard_cmd_control {
@@ -465,6 +534,119 @@ static inline bool __has_cursum_space(struct f2fs_journal *journal,
 	return size <= MAX_SIT_JENTRIES(journal);
 }
 
+<<<<<<< HEAD
+=======
+/*
+ * ioctl commands
+ */
+#define F2FS_IOC_GETFLAGS		FS_IOC_GETFLAGS
+#define F2FS_IOC_SETFLAGS		FS_IOC_SETFLAGS
+#define F2FS_IOC_GETVERSION		FS_IOC_GETVERSION
+
+#define F2FS_IOCTL_MAGIC		0xf5
+#define F2FS_IOC_START_ATOMIC_WRITE	_IO(F2FS_IOCTL_MAGIC, 1)
+#define F2FS_IOC_COMMIT_ATOMIC_WRITE	_IO(F2FS_IOCTL_MAGIC, 2)
+#define F2FS_IOC_START_VOLATILE_WRITE	_IO(F2FS_IOCTL_MAGIC, 3)
+#define F2FS_IOC_RELEASE_VOLATILE_WRITE	_IO(F2FS_IOCTL_MAGIC, 4)
+#define F2FS_IOC_ABORT_VOLATILE_WRITE	_IO(F2FS_IOCTL_MAGIC, 5)
+#define F2FS_IOC_GARBAGE_COLLECT	_IOW(F2FS_IOCTL_MAGIC, 6, __u32)
+#define F2FS_IOC_WRITE_CHECKPOINT	_IO(F2FS_IOCTL_MAGIC, 7)
+#define F2FS_IOC_DEFRAGMENT		_IOWR(F2FS_IOCTL_MAGIC, 8,	\
+						struct f2fs_defragment)
+#define F2FS_IOC_MOVE_RANGE		_IOWR(F2FS_IOCTL_MAGIC, 9,	\
+						struct f2fs_move_range)
+#define F2FS_IOC_FLUSH_DEVICE		_IOW(F2FS_IOCTL_MAGIC, 10,	\
+						struct f2fs_flush_device)
+#define F2FS_IOC_GARBAGE_COLLECT_RANGE	_IOW(F2FS_IOCTL_MAGIC, 11,	\
+						struct f2fs_gc_range)
+#define F2FS_IOC_GET_FEATURES		_IOR(F2FS_IOCTL_MAGIC, 12, __u32)
+#define F2FS_IOC_SET_PIN_FILE		_IOW(F2FS_IOCTL_MAGIC, 13, __u32)
+#define F2FS_IOC_GET_PIN_FILE		_IOR(F2FS_IOCTL_MAGIC, 14, __u32)
+#define F2FS_IOC_PRECACHE_EXTENTS	_IO(F2FS_IOCTL_MAGIC, 15)
+#define F2FS_IOC_RESIZE_FS		_IOW(F2FS_IOCTL_MAGIC, 16, __u64)
+#define F2FS_IOC_GET_COMPRESS_BLOCKS	_IOR(F2FS_IOCTL_MAGIC, 17, __u64)
+#define F2FS_IOC_RELEASE_COMPRESS_BLOCKS				\
+					_IOR(F2FS_IOCTL_MAGIC, 18, __u64)
+#define F2FS_IOC_RESERVE_COMPRESS_BLOCKS				\
+					_IOR(F2FS_IOCTL_MAGIC, 19, __u64)
+
+#define F2FS_APPBOOST_IOC_BASE (50)
+enum {
+	APPBOOST_PRELOAD = F2FS_APPBOOST_IOC_BASE,
+	APPBOOST_START_MERGE,
+	APPBOOST_END_MERGE,
+	APPBOOST_ABORT_PRELOAD,
+};
+#define F2FS_IOC_PRELOAD_FILE		_IOW(F2FS_IOCTL_MAGIC,		\
+						APPBOOST_PRELOAD, __u32)
+#define F2FS_IOC_START_MERGE_FILE	_IOW(F2FS_IOCTL_MAGIC,		\
+						APPBOOST_START_MERGE, struct merge_file_user)
+#define F2FS_IOC_END_MERGE_FILE		_IO(F2FS_IOCTL_MAGIC, APPBOOST_END_MERGE)
+#define F2FS_IOC_ABORT_PRELOAD_FILE	_IO(F2FS_IOCTL_MAGIC, APPBOOST_ABORT_PRELOAD)
+
+#define F2FS_IOC_GET_VOLUME_NAME	FS_IOC_GETFSLABEL
+#define F2FS_IOC_SET_VOLUME_NAME	FS_IOC_SETFSLABEL
+
+#define F2FS_IOC_SET_ENCRYPTION_POLICY	FS_IOC_SET_ENCRYPTION_POLICY
+#define F2FS_IOC_GET_ENCRYPTION_POLICY	FS_IOC_GET_ENCRYPTION_POLICY
+#define F2FS_IOC_GET_ENCRYPTION_PWSALT	FS_IOC_GET_ENCRYPTION_PWSALT
+
+/*
+ * should be same as XFS_IOC_GOINGDOWN.
+ * Flags for going down operation used by FS_IOC_GOINGDOWN
+ */
+#define F2FS_IOC_SHUTDOWN	_IOR('X', 125, __u32)	/* Shutdown */
+#define F2FS_GOING_DOWN_FULLSYNC	0x0	/* going down with full sync */
+#define F2FS_GOING_DOWN_METASYNC	0x1	/* going down with metadata */
+#define F2FS_GOING_DOWN_NOSYNC		0x2	/* going down */
+#define F2FS_GOING_DOWN_METAFLUSH	0x3	/* going down with meta flush */
+#define F2FS_GOING_DOWN_NEED_FSCK	0x4	/* going down to trigger fsck */
+
+#if defined(__KERNEL__) && defined(CONFIG_COMPAT)
+/*
+ * ioctl commands in 32 bit emulation
+ */
+#define F2FS_IOC32_GETFLAGS		FS_IOC32_GETFLAGS
+#define F2FS_IOC32_SETFLAGS		FS_IOC32_SETFLAGS
+#define F2FS_IOC32_GETVERSION		FS_IOC32_GETVERSION
+#endif
+
+#define F2FS_IOC_FSGETXATTR		FS_IOC_FSGETXATTR
+#define F2FS_IOC_FSSETXATTR		FS_IOC_FSSETXATTR
+
+struct f2fs_gc_range {
+	u32 sync;
+	u64 start;
+	u64 len;
+};
+
+struct f2fs_defragment {
+	u64 start;
+	u64 len;
+};
+
+struct f2fs_move_range {
+	u32 dst_fd;		/* destination fd */
+	u64 pos_in;		/* start position in src_fd */
+	u64 pos_out;		/* start position in dst_fd */
+	u64 len;		/* size to move */
+};
+
+struct f2fs_flush_device {
+	u32 dev_num;		/* device number to flush */
+	u32 segments;		/* # of segments to flush */
+};
+
+struct merge_file_user {
+	unsigned ino;
+	unsigned extent_count;
+	unsigned int i_generation;
+	unsigned int REV;
+	__u64 mtime;
+	__u8 __user *extents;
+};
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 /* for inline stuff */
 #define DEF_INLINE_RESERVED_SIZE	1
 static inline int get_extra_isize(struct inode *inode);
@@ -629,13 +811,26 @@ enum extent_type {
 
 struct rb_entry {
 	struct rb_node rb_node;		/* rb node located in rb-tree */
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	union {
 		struct {
 			unsigned int ofs;	/* start offset of the entry */
 			unsigned int len;	/* length of the entry */
 		};
+<<<<<<< HEAD
 		unsigned long long key;		/* 64-bits key */
 	} __packed;
+=======
+		unsigned long long key;		/* 64bits key */
+	};
+#else
+	unsigned int ofs;		/* start offset of the entry */
+	unsigned int len;		/* length of the entry */
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 };
 
 struct extent_info {
@@ -816,6 +1011,10 @@ enum {
 	FI_ATOMIC_COMMITTED,	/* indicate atomic commit completed except disk sync */
 	FI_ATOMIC_REPLACE,	/* indicate atomic replace */
 	FI_MAX,			/* max flag, never be used */
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	FI_LOG_FILE,            /* indicate file is a log */
+	FI_HOT_FILE,            /* indicate file is hot */
+#endif
 };
 
 struct f2fs_inode_info {
@@ -866,6 +1065,9 @@ struct f2fs_inode_info {
 	int i_inline_xattr_size;	/* inline xattr size */
 	struct timespec64 i_crtime;	/* inode creation time */
 	struct timespec64 i_disk_time[4];/* inode disk times */
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	unsigned int skip_count;
+#endif
 
 	/* for file compress */
 	atomic_t i_compr_blocks;		/* # of compressed blocks */
@@ -875,8 +1077,15 @@ struct f2fs_inode_info {
 	unsigned short i_compress_flag;		/* compress flag */
 	unsigned int i_cluster_size;		/* cluster size */
 
+<<<<<<< HEAD
 	unsigned int atomic_write_cnt;
 	loff_t original_i_size;		/* original i_size before atomic write */
+=======
+#ifdef CONFIG_F2FS_APPBOOST
+	struct fi_merge_manage *i_boostfile; /* boostfile merge info */
+	atomic_t appboost_abort;
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 };
 
 static inline void get_read_extent_info(struct extent_info *ext,
@@ -1015,10 +1224,17 @@ static inline void set_new_dnode(struct dnode_of_data *dn, struct inode *inode,
  */
 #define	NR_CURSEG_DATA_TYPE	(3)
 #define NR_CURSEG_NODE_TYPE	(3)
+<<<<<<< HEAD
 #define NR_CURSEG_INMEM_TYPE	(2)
 #define NR_CURSEG_RO_TYPE	(2)
 #define NR_CURSEG_PERSIST_TYPE	(NR_CURSEG_DATA_TYPE + NR_CURSEG_NODE_TYPE)
 #define NR_CURSEG_TYPE		(NR_CURSEG_INMEM_TYPE + NR_CURSEG_PERSIST_TYPE)
+=======
+#define NR_CURSEG_TYPE	(NR_CURSEG_DATA_TYPE + NR_CURSEG_NODE_TYPE)
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+#define NR_INMEM_CURSEG_TYPE	(NR_CURSEG_TYPE + 1)
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 enum {
 	CURSEG_HOT_DATA	= 0,	/* directory entry blocks */
@@ -1027,11 +1243,19 @@ enum {
 	CURSEG_HOT_NODE,	/* direct node blocks of directory files */
 	CURSEG_WARM_NODE,	/* direct node blocks of normal files */
 	CURSEG_COLD_NODE,	/* indirect node blocks */
+<<<<<<< HEAD
 	NR_PERSISTENT_LOG,	/* number of persistent log */
 	CURSEG_COLD_DATA_PINNED = NR_PERSISTENT_LOG,
 				/* pinned file that needs consecutive block address */
 	CURSEG_ALL_DATA_ATGC,	/* SSR alloctor in hot/warm/cold data area */
 	NO_CHECK_TYPE,		/* number of persistent & inmem log */
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	CURSEG_FRAGMENT_DATA,	/* do SSR located in hot/warm/cold data area */
+#endif
+	NO_CHECK_TYPE,
+	CURSEG_COLD_DATA_PINNED,/* cold data for pinned file */
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 };
 
 struct flush_cmd {
@@ -1111,6 +1335,9 @@ enum count_type {
 	F2FS_RD_META,
 	F2FS_DIO_WRITE,
 	F2FS_DIO_READ,
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	F2FS_LOG_FILE,
+#endif
 	NR_COUNT_TYPE,
 };
 
@@ -1325,11 +1552,18 @@ enum {
 	GC_NORMAL,
 	GC_IDLE_CB,
 	GC_IDLE_GREEDY,
+<<<<<<< HEAD
 	GC_IDLE_AT,
 	GC_URGENT_HIGH,
 	GC_URGENT_LOW,
 	GC_URGENT_MID,
 	MAX_GC_MODE,
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	GC_IDLE_AT,
+#endif
+	GC_URGENT,
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 };
 
 enum {
@@ -1473,6 +1707,7 @@ PAGE_PRIVATE_CLEAR_FUNC(dummy, DUMMY_WRITE);
 #define DUMMY_ENCRYPTION_ENABLED(sbi) (0)
 #endif
 
+<<<<<<< HEAD
 static inline unsigned long get_page_private_data(struct page *page)
 {
 	unsigned long data = page_private(page);
@@ -1504,6 +1739,21 @@ static inline void clear_page_private_data(struct page *page)
 		}
 	}
 }
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+struct f2fs_hot_cold_params {
+         unsigned int enable;
+         unsigned int hot_data_lower_limit;
+         unsigned int hot_data_waterline;
+         unsigned int warm_data_lower_limit;
+         unsigned int warm_data_waterline;
+         unsigned int hot_node_lower_limit;
+         unsigned int hot_node_waterline;
+         unsigned int warm_node_lower_limit;
+         unsigned int warm_node_waterline;
+};
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 /* For compression */
 enum compress_algorithm_type {
@@ -1789,6 +2039,20 @@ struct f2fs_sb_info {
 	unsigned int ndirty_inode[NR_INODE_TYPE];	/* # of dirty inodes */
 #endif
 	spinlock_t stat_lock;			/* lock for stat operations */
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_F2FS_BD_STAT
+	spinlock_t bd_lock;
+	struct f2fs_bigdata_info *bd_info;	/* big data collections */
+#endif
+	/* For app/fs IO statistics */
+	spinlock_t iostat_lock;
+	unsigned long long rw_iostat[NR_IO_TYPE];
+	unsigned long long prev_rw_iostat[NR_IO_TYPE];
+	bool iostat_enable;
+	unsigned long iostat_next_period;
+	unsigned int iostat_period_ms;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 
 	/* to attach REQ_META|REQ_FUA flags */
 	unsigned int data_io_flag;
@@ -1827,6 +2091,30 @@ struct f2fs_sb_info {
 	__u32 s_chksum_seed;
 
 	struct workqueue_struct *post_read_wq;	/* post read workqueue */
+#ifdef CONFIG_F2FS_GRADING_SSR
+        struct f2fs_hot_cold_params hot_cold_params;
+#endif
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	/* for GC_AT */
+	bool atgc_enabled;
+	/*
+	 * 2019/08/13, add code to optimize gc
+	 * 2019/08/14, add need_SSR GC
+	 */
+	bool is_frag;				/* urgent gc flag */
+	unsigned long last_frag_check;		/* last urgent check jiffies */
+	atomic_t need_ssr_gc;			/* ssr gc count */
+	/*
+	 * 2019/10/15, control of2fs gc code, will remove
+	 */
+	bool gc_opt_enable;
+	/*
+	* 2020-1-14, add for oDiscard decoupling
+	*/
+	bool dc_opt_enable;
+	int dpolicy_expect;
+	bool fsync_protect;
+#endif
 
 	unsigned char errors[MAX_F2FS_ERRORS];	/* error flags */
 	spinlock_t error_lock;			/* protect errors array */
@@ -1835,6 +2123,7 @@ struct f2fs_sb_info {
 	struct kmem_cache *inline_xattr_slab;	/* inline xattr entry */
 	unsigned int inline_xattr_slab_size;	/* default inline xattr slab size */
 
+<<<<<<< HEAD
 	/* For reclaimed segs statistics per each GC mode */
 	unsigned int gc_segment_mode;		/* GC state for reclaimed segments */
 	unsigned int gc_reclaimed_segs[MAX_GC_MODE];	/* Reclaimed segs for each mode */
@@ -1876,6 +2165,11 @@ struct f2fs_sb_info {
 	/* For io latency related statistics info in one iostat period */
 	spinlock_t iostat_lat_lock;
 	struct iostat_lat_info *iostat_io_lat;
+=======
+#ifdef CONFIG_F2FS_APPBOOST
+	int appboost;
+	unsigned int appboost_max_blocks;
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 #endif
 };
 
@@ -3452,6 +3746,56 @@ static inline int get_inline_xattr_addrs(struct inode *inode)
 		sizeof((f2fs_inode)->field))			\
 		<= (F2FS_OLD_ATTRIBUTE_SIZE + (extra_isize)))	\
 
+<<<<<<< HEAD
+=======
+#define DEFAULT_IOSTAT_PERIOD_MS	3000
+#define MIN_IOSTAT_PERIOD_MS		100
+/* maximum period of iostat tracing is 1 day */
+#define MAX_IOSTAT_PERIOD_MS		8640000
+
+static inline void f2fs_reset_iostat(struct f2fs_sb_info *sbi)
+{
+	int i;
+
+	spin_lock(&sbi->iostat_lock);
+	for (i = 0; i < NR_IO_TYPE; i++) {
+		sbi->rw_iostat[i] = 0;
+		sbi->prev_rw_iostat[i] = 0;
+	}
+	spin_unlock(&sbi->iostat_lock);
+}
+
+extern void f2fs_record_iostat(struct f2fs_sb_info *sbi);
+
+static inline void f2fs_update_iostat(struct f2fs_sb_info *sbi,
+			enum iostat_type type, unsigned long long io_bytes)
+{
+	if (!sbi->iostat_enable)
+		return;
+	spin_lock(&sbi->iostat_lock);
+	sbi->rw_iostat[type] += io_bytes;
+#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
+	if (type == FS_GC_DATA_IO || type == FS_GC_NODE_IO)
+		iomonitor_update_fs_stats(FS_GC_OPT, 1);
+        else if (type == FS_DISCARD)
+		iomonitor_update_fs_stats(FS_DISCARD_OPT, 1);
+#endif /*OPLUS_FEATURE_IOMONITOR*/
+
+	if (type == APP_WRITE_IO || type == APP_DIRECT_IO)
+		sbi->rw_iostat[APP_BUFFERED_IO] =
+			sbi->rw_iostat[APP_WRITE_IO] -
+			sbi->rw_iostat[APP_DIRECT_IO];
+
+	if (type == APP_READ_IO || type == APP_DIRECT_READ_IO)
+		sbi->rw_iostat[APP_BUFFERED_READ_IO] =
+			sbi->rw_iostat[APP_READ_IO] -
+			sbi->rw_iostat[APP_DIRECT_READ_IO];
+	spin_unlock(&sbi->iostat_lock);
+
+	f2fs_record_iostat(sbi);
+}
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 #define __is_large_section(sbi)		((sbi)->segs_per_sec > 1)
 
 #define __is_meta_io(fio) (PAGE_TYPE_OF_BIO((fio)->type) == META)
@@ -3669,6 +4013,10 @@ int f2fs_start_discard_thread(struct f2fs_sb_info *sbi);
 void f2fs_drop_discard_cmd(struct f2fs_sb_info *sbi);
 void f2fs_stop_discard_thread(struct f2fs_sb_info *sbi);
 bool f2fs_issue_discard_timeout(struct f2fs_sb_info *sbi);
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+void refresh_sit_entry(struct f2fs_sb_info *sbi, block_t old, block_t new,
+                                                                bool from_gc);
+#endif
 void f2fs_clear_prefree_segments(struct f2fs_sb_info *sbi,
 					struct cp_control *cpc);
 void f2fs_dirty_to_prefree(struct f2fs_sb_info *sbi);
@@ -3684,8 +4032,18 @@ void f2fs_get_new_segment(struct f2fs_sb_info *sbi,
 			unsigned int *newseg, bool new_sec, int dir);
 void f2fs_allocate_segment_for_resize(struct f2fs_sb_info *sbi, int type,
 					unsigned int start, unsigned int end);
+<<<<<<< HEAD
 void f2fs_allocate_new_section(struct f2fs_sb_info *sbi, int type, bool force);
 void f2fs_allocate_new_segments(struct f2fs_sb_info *sbi);
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+void get_new_segment(struct f2fs_sb_info *sbi,
+                       unsigned int *newseg, bool new_sec, int dir);
+void store_virtual_curseg_summary(struct f2fs_sb_info *sbi);
+void restore_virtual_curseg_status(struct f2fs_sb_info * sbi, bool recover);
+#endif
+void f2fs_allocate_new_segments(struct f2fs_sb_info *sbi, int type);
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 int f2fs_trim_fs(struct f2fs_sb_info *sbi, struct fstrim_range *range);
 bool f2fs_exist_trim_candidates(struct f2fs_sb_info *sbi,
 					struct cp_control *cpc);
@@ -3698,25 +4056,54 @@ void f2fs_do_write_node_page(unsigned int nid, struct f2fs_io_info *fio);
 void f2fs_outplace_write_data(struct dnode_of_data *dn,
 			struct f2fs_io_info *fio);
 int f2fs_inplace_write_data(struct f2fs_io_info *fio);
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
 void f2fs_do_replace_block(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
-			block_t old_blkaddr, block_t new_blkaddr,
+ 			block_t old_blkaddr, block_t new_blkaddr,
 			bool recover_curseg, bool recover_newaddr,
 			bool from_gc);
+#else
+void f2fs_do_replace_block(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
+			block_t old_blkaddr, block_t new_blkaddr,
+<<<<<<< HEAD
+			bool recover_curseg, bool recover_newaddr,
+			bool from_gc);
+=======
+			bool recover_curseg, bool recover_newaddr);
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 void f2fs_replace_block(struct f2fs_sb_info *sbi, struct dnode_of_data *dn,
 			block_t old_addr, block_t new_addr,
 			unsigned char version, bool recover_curseg,
 			bool recover_newaddr);
+<<<<<<< HEAD
 int f2fs_allocate_data_block(struct f2fs_sb_info *sbi, struct page *page,
 			block_t old_blkaddr, block_t *new_blkaddr,
 			struct f2fs_summary *sum, int type,
 			struct f2fs_io_info *fio);
 void f2fs_update_device_state(struct f2fs_sb_info *sbi, nid_t ino,
 					block_t blkaddr, unsigned int blkcnt);
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+void f2fs_allocate_data_block(struct f2fs_sb_info *sbi, struct page *page,
+ 			block_t old_blkaddr, block_t *new_blkaddr,
+ 			struct f2fs_summary *sum, int type,
+			struct f2fs_io_info *fio, bool add_list,
+			int contig_level);
+#else
+void f2fs_allocate_data_block(struct f2fs_sb_info *sbi, struct page *page,
+			block_t old_blkaddr, block_t *new_blkaddr,
+			struct f2fs_summary *sum, int type,
+			struct f2fs_io_info *fio, bool add_list);
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 void f2fs_wait_on_page_writeback(struct page *page,
 			enum page_type type, bool ordered, bool locked);
 void f2fs_wait_on_block_writeback(struct inode *inode, block_t blkaddr);
 void f2fs_wait_on_block_writeback_range(struct inode *inode, block_t blkaddr,
 								block_t len);
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+void init_virtual_curseg(struct f2fs_sb_info *sbi);
+#endif
 void f2fs_write_data_summaries(struct f2fs_sb_info *sbi, block_t start_blk);
 void f2fs_write_node_summaries(struct f2fs_sb_info *sbi, block_t start_blk);
 int f2fs_lookup_journal_in_cursum(struct f2fs_journal *journal, int type,
@@ -3864,7 +4251,16 @@ void f2fs_destroy_post_read_wq(struct f2fs_sb_info *sbi);
 int f2fs_start_gc_thread(struct f2fs_sb_info *sbi);
 void f2fs_stop_gc_thread(struct f2fs_sb_info *sbi);
 block_t f2fs_start_bidx_of_node(unsigned int node_ofs, struct inode *inode);
+<<<<<<< HEAD
 int f2fs_gc(struct f2fs_sb_info *sbi, struct f2fs_gc_control *gc_control);
+=======
+int f2fs_gc(struct f2fs_sb_info *sbi, bool sync, bool background,
+			unsigned int segno);
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+int __init create_garbage_collection_cache(void);
+void destroy_garbage_collection_cache(void);
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 void f2fs_build_gc_manager(struct f2fs_sb_info *sbi);
 int f2fs_resize_fs(struct f2fs_sb_info *sbi, __u64 block_count);
 int __init f2fs_create_garbage_collection_cache(void);
@@ -3878,6 +4274,9 @@ bool f2fs_space_for_roll_forward(struct f2fs_sb_info *sbi);
 int __init f2fs_create_recovery_cache(void);
 void f2fs_destroy_recovery_cache(void);
 
+#ifdef CONFIG_F2FS_APPBOOST
+void f2fs_boostfile_free(struct inode *inode);
+#endif
 /*
  * debug.c
  */
@@ -3931,6 +4330,7 @@ struct f2fs_stat_info {
 	int bg_node_segs, bg_data_segs;
 	int tot_blks, data_blks, node_blks;
 	int bg_data_blks, bg_node_blks;
+<<<<<<< HEAD
 	int curseg[NR_CURSEG_TYPE];
 	int cursec[NR_CURSEG_TYPE];
 	int curzone[NR_CURSEG_TYPE];
@@ -3938,6 +4338,18 @@ struct f2fs_stat_info {
 	unsigned int full_seg[NR_CURSEG_TYPE];
 	unsigned int valid_blks[NR_CURSEG_TYPE];
 
+=======
+	unsigned long long skipped_atomic_files[2];
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	int curseg[NR_INMEM_CURSEG_TYPE];
+	int cursec[NR_INMEM_CURSEG_TYPE];
+	int curzone[NR_INMEM_CURSEG_TYPE];
+#else
+	int curseg[NR_CURSEG_TYPE];
+	int cursec[NR_CURSEG_TYPE];
+	int curzone[NR_CURSEG_TYPE];
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	unsigned int meta_count[META_MAX];
 	unsigned int segment_count[2];
 	unsigned int block_count[2];
@@ -4119,6 +4531,12 @@ static inline void f2fs_destroy_root_stats(void) { }
 static inline void f2fs_update_sit_info(struct f2fs_sb_info *sbi) {}
 #endif
 
+#ifdef CONFIG_F2FS_BD_STAT
+#include "of2fs_bigdata.h"
+void f2fs_build_bd_stat(struct f2fs_sb_info *sbi);
+void f2fs_destroy_bd_stat(struct f2fs_sb_info *sbi);
+#endif
+
 extern const struct file_operations f2fs_dir_operations;
 extern const struct file_operations f2fs_file_operations;
 extern const struct inode_operations f2fs_file_inode_operations;
@@ -4178,10 +4596,18 @@ void f2fs_leave_shrinker(struct f2fs_sb_info *sbi);
  */
 struct rb_entry *f2fs_lookup_rb_tree(struct rb_root_cached *root,
 				struct rb_entry *cached_re, unsigned int ofs);
+<<<<<<< HEAD
 struct rb_node **f2fs_lookup_rb_tree_ext(struct f2fs_sb_info *sbi,
 				struct rb_root_cached *root,
 				struct rb_node **parent,
 				unsigned long long key, bool *left_most);
+=======
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+struct rb_node **__lookup_rb_tree_ext(struct f2fs_sb_info *sbi,
+                                struct rb_root *root, struct rb_node **parent,
+                                unsigned long long key);
+#endif
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 struct rb_node **f2fs_lookup_rb_tree_for_insert(struct f2fs_sb_info *sbi,
 				struct rb_root_cached *root,
 				struct rb_node **parent,
@@ -4631,6 +5057,31 @@ static inline bool is_journalled_quota(struct f2fs_sb_info *sbi)
 #endif
 	return false;
 }
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+/*
+ * 2019-10-15, add for oDiscard
+ */
+#define F2FS_FS_FREE_PERCENT		20
+#define F2FS_DEVICE_FREE_PERCENT	10
+
+/*
+ * 2020-1-14, add for oDiscard decoupling
+ */
+static inline bool f2fs_is_space_free(struct f2fs_sb_info *sbi)
+{
+	struct discard_cmd_control *dcc = SM_I(sbi)->dcc_info;
+	block_t user_blocks = sbi->user_block_count;
+	block_t ovp_cnt = SM_I(sbi)->ovp_segments << sbi->log_blocks_per_seg;
+	block_t avail_block = user_blocks - valid_user_blocks(sbi) + ovp_cnt;
+	block_t fs_threshold = (block_t)(SM_I(sbi)->main_segments *
+			sbi->blocks_per_seg * F2FS_FS_FREE_PERCENT) / 100;
+	block_t device_threshold = (block_t)(SM_I(sbi)->main_segments *
+			sbi->blocks_per_seg * F2FS_DEVICE_FREE_PERCENT) / 100;
+
+	return avail_block > fs_threshold &&
+			avail_block - dcc->undiscard_blks > device_threshold;
+}
+#endif
 
 static inline bool f2fs_block_unit_discard(struct f2fs_sb_info *sbi)
 {

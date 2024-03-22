@@ -2222,6 +2222,10 @@ static inline u32 open_file_to_av(struct file *file)
 
 static int selinux_binder_set_context_mgr(const struct cred *mgr)
 {
+<<<<<<< HEAD
+=======
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	return avc_has_perm(&selinux_state,
 			    current_sid(), cred_sid(mgr), SECCLASS_BINDER,
 			    BINDER__SET_CONTEXT_MGR, NULL);
@@ -2250,6 +2254,10 @@ static int selinux_binder_transaction(const struct cred *from,
 static int selinux_binder_transfer_binder(const struct cred *from,
 					  const struct cred *to)
 {
+<<<<<<< HEAD
+=======
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	return avc_has_perm(&selinux_state,
 			    cred_sid(from), cred_sid(to),
 			    SECCLASS_BINDER, BINDER__TRANSFER,
@@ -7389,6 +7397,15 @@ void selinux_complete_init(void)
 	pr_debug("SELinux:  Setting up existing superblocks.\n");
 	iterate_supers(delayed_superblock_init, NULL);
 }
+
+
+#ifdef CONFIG_OPLUS_SECURE_GUARD
+int get_current_security_context(char **context, u32 *context_len)
+{
+	u32 sid = current_sid();
+	return security_sid_to_context(&selinux_state, sid, context, context_len);
+}
+#endif /* CONFIG_OPLUS_SECURE_GUARD */
 
 /* SELinux requires early initialization in order to label
    all processes and objects when they are created. */

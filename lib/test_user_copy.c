@@ -55,6 +55,7 @@ static bool is_zeroed(void *from, size_t size)
 static int test_check_nonzero_user(char *kmem, char __user *umem, size_t size)
 {
 	int ret = 0;
+<<<<<<< HEAD
 	size_t start, end, i, zero_start, zero_end;
 
 	if (test(size < 2 * PAGE_SIZE, "buffer too small"))
@@ -84,6 +85,20 @@ static int test_check_nonzero_user(char *kmem, char __user *umem, size_t size)
 	 *
 	 * And we verify that check_nonzero_user() acts identically to
 	 * memchr_inv().
+=======
+	size_t start, end, i;
+	size_t zero_start = size / 4;
+	size_t zero_end = size - zero_start;
+
+	/*
+	 * We conduct a series of check_nonzero_user() tests on a block of memory
+	 * with the following byte-pattern (trying every possible [start,end]
+	 * pair):
+	 *
+	 *   [ 00 ff 00 ff ... 00 00 00 00 ... ff 00 ff 00 ]
+	 *
+	 * And we verify that check_nonzero_user() acts identically to memchr_inv().
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 	 */
 
 	memset(kmem, 0x0, size);

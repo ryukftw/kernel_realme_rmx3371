@@ -521,6 +521,10 @@ static inline int sysfs_emit_at(char *buf, int at, const char *fmt, ...)
 {
 	return 0;
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> c79d036dc02a (Synchronize code for realme RMX3366_14.0.0.150(CN01))
 #endif /* CONFIG_SYSFS */
 
 static inline int __must_check sysfs_create_file(struct kobject *kobj,
