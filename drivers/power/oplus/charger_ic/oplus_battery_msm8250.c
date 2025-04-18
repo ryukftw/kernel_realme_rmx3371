@@ -4846,7 +4846,7 @@ restore_adc_config:
 	 /* Restore ADC channel config */
 	if (chg->wa_flags & USBIN_ADC_WA)
 		rc = smblib_write(chg, BATIF_ADC_CHANNEL_EN_REG, reg);
-		if (rc < 0)
+	if (rc < 0)
 			smblib_err(chg, "Couldn't write ADC config rc=%d\n",
 						rc);
 
@@ -7576,7 +7576,7 @@ irqreturn_t usb_source_change_irq_handler(int irq, void *data)
 #ifdef OPLUS_FEATURE_CHG_BASIC
 	if ((bool)(stat & APSD_DTC_STATUS_DONE_BIT))
 		cancel_delayed_work(&g_oplus_chip->update_work);
-		oplus_chg_wake_update_work();
+	oplus_chg_wake_update_work();
 #endif
 
 	smblib_handle_hvdcp_detect_done(chg,
