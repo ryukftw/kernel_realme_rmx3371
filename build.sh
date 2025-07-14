@@ -33,7 +33,7 @@ cd anykernel || exit 1
     cp ../out/arch/arm64/boot/Image .
     cp ../out/arch/arm64/boot/dtbo.img .
     cp ../out/arch/arm64/boot/dtb .
-    zip -r9 phoeniX-2.1-${DT}.zip *
+    zip -r9 phoeniX-2.2-${DT}.zip *
     rm Image dtbo.img dtb
     cd ..
 }
