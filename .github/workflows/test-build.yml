@@ -52,7 +52,7 @@ jobs:
 
       - name: Clone AnyKernel3
         run: |
-          git clone --depth=1 -b channel https://github.com/bijoyv9/AnyKernel3 anykernel
+          git clone --depth=1 https://github.com/bijoyv9/AnyKernel3.git anykernel
 
       - name: Pack AnyKernel zip
         run: |
