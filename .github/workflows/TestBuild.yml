@@ -1,34 +1,37 @@
 name: Build Sukisu Ultra
+
 on:
   workflow_dispatch:
-  
+
 jobs:
   build:
+    name: phoeniX-SSU
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         device: [RMX3371]
-        
-    name: phoeniX-SSU
-    runs-on: ubuntu-latest
+
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_NOHASHDIR: "true"
       CCACHE_HARDLINK: "true"
-    
+
     steps:
       - name: Installing Dependencies
         run: |
           sudo apt update -y
-          sudo apt-get install -y lld binutils clang llvm zip flex bison libncurses-dev gawk  libiberty-dev autoconf kmod bc build-essential gcc libc6 curl libstdc++6 git wget libssl-dev cpio p7zip-full ccache
+          sudo apt-get install -y lld binutils clang llvm zip flex bison libncurses-dev gawk libiberty-dev autoconf kmod bc build-essential gcc libc6 curl libstdc++6 git wget libssl-dev cpio p7zip-full ccache
           sudo apt clean
-          
+
       - name: Setup kernel source
         uses: actions/checkout@v4
+        with:
+          path: kernel-source
 
       - name: Setup submodules
         working-directory: kernel-source
         run: git submodule update --init --recursive --depth 0
-        
+
       - name: Cache Build Tools
         id: cache-clang
         uses: actions/cache@v4
@@ -36,12 +39,12 @@ jobs:
           path: |
             ${{ github.workspace }}/tc
           key: ${{ runner.os }}-clang-tools
-          
+
       - name: Download Build Tools
         if: steps.cache-clang.outputs.cache-hit != 'true'
         run: |
           git clone https://gitlab.com/provasishh/clang --depth=1 --single-branch --no-tags tc
-          
+
       - name: Checkout Anykernel
         uses: actions/checkout@v4
         with:
@@ -50,40 +53,41 @@ jobs:
           repository: bijoyv9/AnyKernel3
           ref: channel
           path: anykernel     
-          
+
       - name: Setup Ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: Build-KernelSU-${{ matrix.device }}
           save: ${{ github.event_name != 'pull_request' }}
           max-size: 2G
-          
+
       - name: Build Kernel
         working-directory: kernel-source
         run: |
-         DT=$(date +"%Y%m%d-%H%M")
-         config=vendor/kona-perf_defconfig
-         MAKE_PATH=$GITHUB_WORKSPACE/tc/build-tool/bin/
-         CROSS_COMPILE=$GITHUB_WORKSPACE/tc/aarch64-linux-android-4.9/bin/aarch64-linux-android-
-         KERNEL_ARCH=arm64
-         KERNEL_OUT=$GITHUB_WORKSPACE/out
-         export KERNEL_SRC=${KERNEL_OUT}
-         export CLANG_TRIPLE=aarch64-linux-gnu-
-         OUT_DIR=${KERNEL_OUT}
-         ARCH=${KERNEL_ARCH}
-         TARGET_INCLUDES=${TARGET_KERNEL_MAKE_CFLAGS}
-         TARGET_LINCLUDES=${TARGET_KERNEL_MAKE_LDFLAGS}
+          DT=$(date +"%Y%m%d-%H%M")
+          config=vendor/kona-perf_defconfig
+          MAKE_PATH=$GITHUB_WORKSPACE/tc/build-tool/bin/
+          CROSS_COMPILE=$GITHUB_WORKSPACE/tc/aarch64-linux-android-4.9/bin/aarch64-linux-android-
+          KERNEL_ARCH=arm64
+          KERNEL_OUT=$GITHUB_WORKSPACE/out
+          export KERNEL_SRC=${KERNEL_OUT}
+          export CLANG_TRIPLE=aarch64-linux-gnu-
+          export OUT_DIR=${KERNEL_OUT}
+          export ARCH=${KERNEL_ARCH}
+          export TARGET_INCLUDES=${TARGET_KERNEL_MAKE_CFLAGS}
+          export TARGET_LINCLUDES=${TARGET_KERNEL_MAKE_LDFLAGS}
+          export CC=$GITHUB_WORKSPACE/tc/clang/bin/clang
 
-         TARGET_KERNEL_MAKE_ENV+="CC=$GITHUB_WORKSPACE/tc/clang/bin/clang"
+          make O=${OUT_DIR} LLVM_IAS=1 HOSTLDFLAGS="${TARGET_LINCLUDES}" ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip $config
 
-         make O=${OUT_DIR} ${TARGET_KERNEL_MAKE_ENV} LLVM_IAS=1 HOSTLDFLAGS="${TARGET_LINCLUDES}" ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip LLVM_IAS=1 $config && make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} LLVM_IAS=1 HOSTCFLAGS="${TARGET_INCLUDES}" HOSTLDFLAGS="${TARGET_LINCLUDES}" O=${OUT_DIR} ${TARGET_KERNEL_MAKE_ENV} NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip LLVM_IAS=1 -j$(nproc --all) |& tee build.log
+          make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} LLVM_IAS=1 HOSTCFLAGS="${TARGET_INCLUDES}" HOSTLDFLAGS="${TARGET_LINCLUDES}" O=${OUT_DIR} NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip -j$(nproc --all) |& tee build.log
 
       - name: Upload phoeniX-SSU-${{ matrix.device }}
         uses: actions/upload-artifact@v4
         with:
           name: phoeniX-SSU-${{ matrix.device }}
-          path: kernel-source/out/arch/arm64/boot/*
-          
+          path: kernel-source/out/arch/arm64/boot/Image
+
       - name: Prepare Anykernel
         working-directory: anykernel
         run: |
@@ -92,20 +96,20 @@ jobs:
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
           zip -r "$ZIP_NAME.zip" *
           mv "$ZIP_NAME.zip" $GITHUB_WORKSPACE
-          
+
       - name: Upload Anykernel
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ZIP_NAME }}
-          path: anykernel/*
-          
+          path: ${{ env.ZIP_NAME }}.zip
+
       - name: Creating Config Info
         run: |
           export ksu_version=$(git -C $GITHUB_WORKSPACE/kernel-source/KernelSU rev-parse --short HEAD)
           echo "
           For Realme GT Neo 3T (RMX3371)
           " >> INFO.txt
-      
+
       - name: Release
         if: success()
         uses: softprops/action-gh-release@v1
@@ -114,7 +118,7 @@ jobs:
           body_path: "INFO.txt"
           files: |
             ${{ env.ZIP_NAME }}.zip
-          tag_name: ${{ github.run_number }}-${{ github.ref }}-${{ matrix.device }}
+          tag_name: ${{ github.run_number }}-${{ github.ref_name }}-${{ matrix.device }}
 
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@v2
