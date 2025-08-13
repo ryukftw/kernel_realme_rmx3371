@@ -1,8 +1,7 @@
 name: Build Sukisu Ultra
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "10 12 * * *"
+  
 jobs:
   build:
     strategy:
@@ -25,9 +24,6 @@ jobs:
           
       - name: Setup kernel source
         uses: actions/checkout@v4
-        with:
-          ref: phoeniX-SSU
-          path: kernel-source
 
       - name: Setup submodules
         working-directory: kernel-source
