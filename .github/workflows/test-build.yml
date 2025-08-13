@@ -1,5 +1,4 @@
 name: Build Sukisu Ultra
-
 on:
   workflow_dispatch:
 
