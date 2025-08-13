@@ -17,7 +17,7 @@ jobs:
 
       - name: Clone kernel source
         run: |
-          git clone --depth=1 https://github.com/YOUR_USERNAME/YOUR_KERNEL_REPO kernel
+          git clone -b phoeniX-SSU --depth=1 https://github.com/DinhQuangDoi/kernel_realme_RMX3371.git kernel
           cd kernel
           git submodule update --init --recursive
 
