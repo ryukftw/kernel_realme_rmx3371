@@ -50,19 +50,20 @@ jobs:
             STRIP=llvm-strip \
             OBJCOPY=llvm-objcopy
 
-      - name: Clone AnyKernel3
-        run: |
-          git clone --depth=1 https://github.com/bijoyv9/AnyKernel3.git anykernel
-
       - name: Pack AnyKernel zip
         run: |
-          cp kernel/out/arch/arm64/boot/Image anykernel/
-          cd anykernel
-          zip -r Kernel-RMX3371.zip *
-          mv Kernel-RMX3371.zip $GITHUB_WORKSPACE/
+          cd anykernel || exit 1
+          rm *zip
+          cp ../out/arch/arm64/boot/Image .
+          cp ../out/arch/arm64/boot/dtbo.img .
+          cp ../out/arch/arm64/boot/dtb .
+          zip -r9 phoeniX-2.2-${DT}.zip *
+          rm Image dtbo.img dtb
+          cd ..          
+          mv phoeniX-2.2-*.zip ../
 
       - name: Upload zip
         uses: actions/upload-artifact@v4
         with:
-          name: Kernel-RMX3371
-          path: Kernel-RMX3371.zip
+          name: phoeniX-2.2
+          path: phoeniX-2.2-*.zip
