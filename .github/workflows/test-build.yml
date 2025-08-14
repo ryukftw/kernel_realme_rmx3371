@@ -78,7 +78,6 @@ jobs:
          zip -r9 phoeniX-2.2-${DT}.zip *
          mv phoeniX-2.2-${DT}.zip $GITHUB_WORKSPACE/
 
-
     - name: Upload zip
       uses: actions/upload-artifact@v4
       with:
