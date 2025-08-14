@@ -50,17 +50,14 @@ jobs:
             STRIP=llvm-strip \
             OBJCOPY=llvm-objcopy
 
-      - name: Pack AnyKernel zip
+      - name: Pack zip
         run: |
-          cd anykernel || exit 1
-          rm *zip
-          cp ../out/arch/arm64/boot/Image .
-          cp ../out/arch/arm64/boot/dtbo.img .
-          cp ../out/arch/arm64/boot/dtb .
-          zip -r9 phoeniX-2.2-${DT}.zip *
-          rm Image dtbo.img dtb
-          cd ..          
-          mv phoeniX-2.2-*.zip ../
+         DT=$(date +"%Y%m%d-%H%M")
+         cd kernel/anykernel
+         cp ../out/arch/arm64/boot/{Image,dtbo.img,dtb} .
+         zip -r9 phoeniX-2.2-${DT}.zip *
+         mv phoeniX-2.2-${DT}.zip $GITHUB_WORKSPACE/
+
 
       - name: Upload zip
         uses: actions/upload-artifact@v4
